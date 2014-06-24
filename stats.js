@@ -1,5 +1,7 @@
 /*jshint node:true, laxcomma:true */
 
+document.addEventListener('DOMContentLoaded', function () {
+
 var dgram  = require('dgram')
   , util    = require('util')
   , net    = require('net')
@@ -418,4 +420,6 @@ config.configFile(process.argv[2], function (config, oldConfig) {
 
 process.on('exit', function () {
   flushMetrics();
+});
+
 });
