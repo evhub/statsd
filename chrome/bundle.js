@@ -1,4 +1,4 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 (function (process){
 /*jshint node:true, laxcomma:true */
 
@@ -32,6 +32,10 @@ var Configurator = function (file) {
   });
 };
 
+if (! process.EventEmitter) {
+    process.EventEmitter = require("events");
+};
+
 util.inherits(Configurator, process.EventEmitter);
 
 exports.Configurator = Configurator;
@@ -45,7 +49,7 @@ exports.configFile = function(file, callbackFunc) {
 
 
 }).call(this,require("UPikzY"))
-},{"UPikzY":12,"fs":9,"util":14}],2:[function(require,module,exports){
+},{"UPikzY":14,"events":"2rLo4h","fs":"ICJKhd","util":"WE+poI"}],2:[function(require,module,exports){
 /**
  * Public: test function to filter out malformed packets
  *
@@ -148,7 +152,7 @@ Logger.prototype = {
 
 exports.Logger = Logger;
 
-},{"util":14}],4:[function(require,module,exports){
+},{"util":"WE+poI"}],4:[function(require,module,exports){
 /*jshint node:true, laxcomma:true */
 
 /**
@@ -403,7 +407,7 @@ exports.set_title = function(config) {
 }
 
 }).call(this,require("UPikzY"))
-},{"UPikzY":12,"util":14}],7:[function(require,module,exports){
+},{"UPikzY":14,"util":"WE+poI"}],7:[function(require,module,exports){
 /*jshint node:true, laxcomma:true */
 
 var Set = function() {
@@ -866,9 +870,13 @@ process.on('exit', function () {
 });
 
 }).call(this,require("UPikzY"))
-},{"./lib/config":1,"./lib/helpers":2,"./lib/logger":3,"./lib/mgmt_console":4,"./lib/process_metrics":5,"./lib/process_mgmt":6,"./lib/set":7,"UPikzY":12,"dgram":9,"events":10,"fs":9,"net":9,"util":14}],9:[function(require,module,exports){
+},{"./lib/config":1,"./lib/helpers":2,"./lib/logger":3,"./lib/mgmt_console":4,"./lib/process_metrics":5,"./lib/process_mgmt":6,"./lib/set":7,"UPikzY":14,"dgram":"ICJKhd","events":"2rLo4h","fs":"ICJKhd","net":"ICJKhd","util":"WE+poI"}],"ICJKhd":[function(require,module,exports){
 
-},{}],10:[function(require,module,exports){
+},{}],"fs":[function(require,module,exports){
+module.exports=require('ICJKhd');
+},{}],"events":[function(require,module,exports){
+module.exports=require('2rLo4h');
+},{}],"2rLo4h":[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -1173,7 +1181,7 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],11:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -1198,7 +1206,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],12:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -1263,14 +1271,14 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],13:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],14:[function(require,module,exports){
+},{}],"WE+poI":[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -1860,4 +1868,6 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this,require("UPikzY"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":13,"UPikzY":12,"inherits":11}]},{},[8])
+},{"./support/isBuffer":15,"UPikzY":14,"inherits":13}],"util":[function(require,module,exports){
+module.exports=require('WE+poI');
+},{}]},{},[8])
