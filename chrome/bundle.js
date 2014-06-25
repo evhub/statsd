@@ -1,5 +1,4 @@
 require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-(function (process){
 /*jshint node:true, laxcomma:true */
 
 var fs  = require('fs')
@@ -13,7 +12,6 @@ var Configurator = function (file) {
 
   this.updateConfig = function () {
       old_config = self.config;
-      self.emit('configChanged', self.config);
 
       if (file == "Config.js") {
           self.config = {
@@ -51,24 +49,15 @@ var Configurator = function (file) {
   this.updateConfig();
 };
 
-if (! process.EventEmitter) {
-    process.EventEmitter = require("events");
-};
-
-util.inherits(Configurator, process.EventEmitter);
-
 exports.Configurator = Configurator;
 
 exports.configFile = function(file, callbackFunc) {
   var config = new Configurator(file);
-  config.on('configChanged', function() {
-    callbackFunc(config.config, config.oldConfig);
-  });
+  callbackFunc(config.config, config.oldConfig);
 };
 
 
-}).call(this,require("K/m7xv"))
-},{"K/m7xv":14,"events":"+0DNuN","fs":"moCkre","util":"ttsnNg"}],2:[function(require,module,exports){
+},{"fs":"ICJKhd","util":"WE+poI"}],2:[function(require,module,exports){
 /**
  * Public: test function to filter out malformed packets
  *
@@ -127,26 +116,13 @@ var Logger = function (config) {
     this.util = this.base_util;
   } else {
     if (this.backend == 'console') {
-        this.util = {
-            format : this.base_util.format,
-            debug : console.warn,
-            error : console.error,
-            puts : console.log,
-            print : console.log,
-            log : console.log,
-            inspect : this.base_util.inspect,
-            isArray : this.base_util.isArray,
-            isRegExp : this.base_util.isRegExp,
-            isDate : this.base_util.isDate,
-            isError : this.base_util.isError,
-            pump : this.base_util.pump,
-            inherits : this.base_util.inherits,
-        };
-        this.backend = 'stdout';
+        this.util = console;
+        this.base_util.inherits(this.util, this.base_util);
     } else {
       throw "Logger: Should be 'stdout' or 'console'.";
-    }
-  }
+    };
+  };
+    this.util.log("Logger enabled.");
 };
 
 Logger.prototype = {
@@ -172,7 +148,7 @@ Logger.prototype = {
 
 exports.Logger = Logger;
 
-},{"util":"ttsnNg"}],4:[function(require,module,exports){
+},{"util":"WE+poI"}],4:[function(require,module,exports){
 /*jshint node:true, laxcomma:true */
 
 /**
@@ -426,8 +402,8 @@ exports.set_title = function(config) {
  }
 }
 
-}).call(this,require("K/m7xv"))
-},{"K/m7xv":14,"util":"ttsnNg"}],7:[function(require,module,exports){
+}).call(this,require("UPikzY"))
+},{"UPikzY":14,"util":"WE+poI"}],7:[function(require,module,exports){
 /*jshint node:true, laxcomma:true */
 
 var Set = function() {
@@ -469,6 +445,7 @@ console.group("Starting...");
 document.addEventListener('DOMContentLoaded', function () {
 console.group("Running...");
 
+                          console.log("1. Imports");
 var dgram  = require('dgram')
   , util    = require('util')
   , net    = require('net')
@@ -482,7 +459,7 @@ var dgram  = require('dgram')
   , process_mgmt = require('./lib/process_mgmt')
   , mgmt = require('./lib/mgmt_console');
 
-
+                          console.log("2. Variables");
 // initialize data structures with defaults for statsd stats
 var keyCounter = {};
 var counters = {};
@@ -500,6 +477,7 @@ var healthStatus = config.healthStatus || 'up';
 var old_timestamp = 0;
 var timestamp_lag_namespace;
 
+                          console.log("3. Backends");
 // Load and init the backend from the backends/ directory.
 function loadBackend(config, name) {
   var backendmod = require(name);
@@ -518,8 +496,10 @@ function loadBackend(config, name) {
 // global for conf
 var conf;
 
+                          console.log("4. Flush");
 // Flush metrics to each backend.
 function flushMetrics() {
+                          console.log("Flushing...");
   var time_stamp = Math.round(new Date().getTime() / 1000);
   if (old_timestamp > 0) {
     gauges[timestamp_lag_namespace] = (time_stamp - old_timestamp - (Number(conf.flushInterval)/1000));
@@ -599,7 +579,7 @@ function flushMetrics() {
   pm.process_metrics(metrics_hash, flushInterval, time_stamp, function emitFlush(metrics) {
     backendEvents.emit('flush', time_stamp, metrics);
   });
-
+                          console.log("Flushed");
 }
 
 var stats = {
@@ -609,18 +589,20 @@ var stats = {
   }
 };
 
+                          console.log("5. Config");
 // Global for the logger
 var l;
 
-config.configFile("Config.js", function (config, oldConfig) {
-  conf = config;
+config.configFile("Config.js", function (newConfig, oldConfig) {
+                  console.log("Configuring...");
+  conf = newConfig;
 
-  process_mgmt.init(config);
+  process_mgmt.init(newConfig);
 
-  l = new logger.Logger(config.log || {});
+  l = new logger.Logger(newConfig.log || {}).util;
 
   // setup config for stats prefix
-  prefixStats = config.prefixStats;
+  prefixStats = newConfig.prefixStats;
   prefixStats = prefixStats !== undefined ? prefixStats : "statsd";
   //setup the names for the stats stored in counters{}
   bad_lines_seen   = prefixStats + ".bad_lines_seen";
@@ -634,9 +616,9 @@ config.configFile("Config.js", function (config, oldConfig) {
   if (server === undefined) {
 
     // key counting
-    var keyFlushInterval = Number((config.keyFlush && config.keyFlush.interval) || 0);
+    var keyFlushInterval = Number((newConfig.keyFlush && newConfig.keyFlush.interval) || 0);
 
-    var udp_version = config.address_ipv6 ? 'udp6' : 'udp4';
+    var udp_version = newConfig.address_ipv6 ? 'udp6' : 'udp4';
     server = dgram.createSocket(udp_version, function (msg, rinfo) {
       backendEvents.emit('packet', msg, rinfo);
       counters[packets_received]++;
@@ -651,7 +633,7 @@ config.configFile("Config.js", function (config, oldConfig) {
         if (metrics[midx].length === 0) {
           continue;
         }
-        if (config.dumpMessages) {
+        if (newConfig.dumpMessages) {
           l.log(metrics[midx].toString());
         }
         var bits = metrics[midx].toString().split(':');
@@ -824,34 +806,34 @@ config.configFile("Config.js", function (config, oldConfig) {
       });
     });
 
-    server.bind(config.port || 8125, config.address || undefined);
-    mgmtServer.listen(config.mgmt_port || 8126, config.mgmt_address || undefined);
+    server.bind(newConfig.port || 8125, newConfig.address || undefined);
+    mgmtServer.listen(newConfig.mgmt_port || 8126, newConfig.mgmt_address || undefined);
 
-    util.log("server is up");
+    l.log("Server is up.");
 
-    pctThreshold = config.percentThreshold || 90;
+    pctThreshold = newConfig.percentThreshold || 90;
     if (!Array.isArray(pctThreshold)) {
       pctThreshold = [ pctThreshold ]; // listify percentiles so single values work the same
     }
 
-    flushInterval = Number(config.flushInterval || 10000);
-    config.flushInterval = flushInterval;
+    flushInterval = Number(newConfig.flushInterval || 10000);
+    newConfig.flushInterval = flushInterval;
 
-    if (config.backends) {
-      for (var i = 0; i < config.backends.length; i++) {
-        loadBackend(config, config.backends[i]);
+    if (newConfig.backends) {
+      for (var i = 0; i < newConfig.backends.length; i++) {
+        loadBackend(newConfig, newConfig.backends[i]);
       }
     } else {
       // The default backend is graphite
-      loadBackend(config, './backends/graphite');
+      loadBackend(newConfig, './backends/graphite');
     }
 
     // Setup the flush timer
     var flushInt = setInterval(flushMetrics, flushInterval);
 
     if (keyFlushInterval > 0) {
-      var keyFlushPercent = Number((config.keyFlush && config.keyFlush.percent) || 100);
-      var keyFlushLog = config.keyFlush && config.keyFlush.log;
+      var keyFlushPercent = Number((newConfig.keyFlush && newConfig.keyFlush.percent) || 100);
+      var keyFlushLog = newConfig.keyFlush && newConfig.keyFlush.log;
 
       keyFlushInt = setInterval(function () {
         var sortedKeys = [];
@@ -883,8 +865,10 @@ config.configFile("Config.js", function (config, oldConfig) {
       }, keyFlushInterval);
     }
   }
+                                console.log("Configured.");
 });
 
+                  console.log("6. Process");
 process.on('exit', function () {
   flushMetrics();
 });
@@ -895,14 +879,14 @@ console.groupEnd();
 console.log("Started.");
 console.groupEnd();
 
-}).call(this,require("K/m7xv"))
-},{"./lib/config":1,"./lib/helpers":2,"./lib/logger":3,"./lib/mgmt_console":4,"./lib/process_metrics":5,"./lib/process_mgmt":6,"./lib/set":7,"K/m7xv":14,"dgram":"moCkre","events":"+0DNuN","fs":"moCkre","net":"moCkre","util":"ttsnNg"}],"moCkre":[function(require,module,exports){
+}).call(this,require("UPikzY"))
+},{"./lib/config":1,"./lib/helpers":2,"./lib/logger":3,"./lib/mgmt_console":4,"./lib/process_metrics":5,"./lib/process_mgmt":6,"./lib/set":7,"UPikzY":14,"dgram":"ICJKhd","events":"2rLo4h","fs":"ICJKhd","net":"ICJKhd","util":"WE+poI"}],"ICJKhd":[function(require,module,exports){
 
 },{}],"fs":[function(require,module,exports){
-module.exports=require('moCkre');
+module.exports=require('ICJKhd');
 },{}],"events":[function(require,module,exports){
-module.exports=require('+0DNuN');
-},{}],"+0DNuN":[function(require,module,exports){
+module.exports=require('2rLo4h');
+},{}],"2rLo4h":[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -1304,7 +1288,7 @@ module.exports = function isBuffer(arg) {
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],"ttsnNg":[function(require,module,exports){
+},{}],"WE+poI":[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -1893,7 +1877,7 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-}).call(this,require("K/m7xv"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":15,"K/m7xv":14,"inherits":13}],"util":[function(require,module,exports){
-module.exports=require('ttsnNg');
+}).call(this,require("UPikzY"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":15,"UPikzY":14,"inherits":13}],"util":[function(require,module,exports){
+module.exports=require('WE+poI');
 },{}]},{},[8])
