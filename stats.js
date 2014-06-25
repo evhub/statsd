@@ -1,6 +1,8 @@
 /*jshint node:true, laxcomma:true */
+console.group("Starting...");
 
 document.addEventListener('DOMContentLoaded', function () {
+console.group("Running...");
 
 var dgram  = require('dgram')
   , util    = require('util')
@@ -422,4 +424,8 @@ process.on('exit', function () {
   flushMetrics();
 });
 
+console.log("Complete.");
+console.groupEnd();
 });
+console.log("Started.");
+console.groupEnd();

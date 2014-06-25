@@ -463,8 +463,10 @@ exports.Set = Set;
 },{}],8:[function(require,module,exports){
 (function (process){
 /*jshint node:true, laxcomma:true */
+console.group("Starting...");
 
 document.addEventListener('DOMContentLoaded', function () {
+console.group("Running...");
 
 var dgram  = require('dgram')
   , util    = require('util')
@@ -886,7 +888,11 @@ process.on('exit', function () {
   flushMetrics();
 });
 
+console.log("Complete.");
+console.groupEnd();
 });
+console.log("Started.");
+console.groupEnd();
 
 }).call(this,require("UPikzY"))
 },{"./lib/config":1,"./lib/helpers":2,"./lib/logger":3,"./lib/mgmt_console":4,"./lib/process_metrics":5,"./lib/process_mgmt":6,"./lib/set":7,"UPikzY":14,"dgram":"ICJKhd","events":"2rLo4h","fs":"ICJKhd","net":"ICJKhd","util":"WE+poI"}],"ICJKhd":[function(require,module,exports){
