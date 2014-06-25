@@ -12,24 +12,38 @@ var Configurator = function (file) {
   var oldConfig = {};
 
   this.updateConfig = function () {
-    util.log('reading config file: ' + file);
-
-    fs.readFile(file, function (err, data) {
-      if (err) { throw err; }
       old_config = self.config;
-
-      self.config = eval('config = ' + fs.readFileSync(file));
       self.emit('configChanged', self.config);
-    });
+
+      if (file == "Config.js") {
+          self.config = {
+          graphitePort: 2003
+              , graphiteHost: "graphite.example.com"
+              , port: 8125
+              , backends: [ "./backends/graphite" ]
+          };
+      }
+      else if (file == "ProxyConfig.js") {
+          self.config = {
+          nodes: [
+                  {host: '127.0.0.1', port: 8127, adminport: 8128},
+                  {host: '127.0.0.1', port: 8129, adminport: 8130},
+                  {host: '127.0.0.1', port: 8131, adminport: 8132}
+                  ],
+          udp_version: 'udp4',
+          host:  '0.0.0.0',
+          port: 8125,
+          checkInterval: 1000,
+          cacheSize: 10000
+          };
+      }
+      else {
+          util.log("Unknown config file "+file);
+      };
+
   };
 
   this.updateConfig();
-
-  fs.watch(file, function (event, filename) {
-    if (event == 'change' && self.config.automaticConfigReload != false) {
-      self.updateConfig();
-    }
-  });
 };
 
 if (! process.EventEmitter) {
@@ -590,7 +604,7 @@ var stats = {
 // Global for the logger
 var l;
 
-config.configFile(process.argv[2], function (config, oldConfig) {
+config.configFile("Config.js", function (config, oldConfig) {
   conf = config;
 
   process_mgmt.init(config);
