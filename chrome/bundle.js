@@ -22,6 +22,7 @@ var Configurator = function (file) {
               , port: 8125
               , backends: [ "./backends/graphite" ]
               , dumpMessages: true
+              , debug: true
               , log: {
                     backend: "console"
               }
@@ -66,8 +67,8 @@ exports.configFile = function(file, callbackFunc) {
 };
 
 
-}).call(this,require("UPikzY"))
-},{"UPikzY":14,"events":"2rLo4h","fs":"ICJKhd","util":"WE+poI"}],2:[function(require,module,exports){
+}).call(this,require("K/m7xv"))
+},{"K/m7xv":14,"events":"+0DNuN","fs":"moCkre","util":"ttsnNg"}],2:[function(require,module,exports){
 /**
  * Public: test function to filter out malformed packets
  *
@@ -171,7 +172,7 @@ Logger.prototype = {
 
 exports.Logger = Logger;
 
-},{"util":"WE+poI"}],4:[function(require,module,exports){
+},{"util":"ttsnNg"}],4:[function(require,module,exports){
 /*jshint node:true, laxcomma:true */
 
 /**
@@ -425,8 +426,8 @@ exports.set_title = function(config) {
  }
 }
 
-}).call(this,require("UPikzY"))
-},{"UPikzY":14,"util":"WE+poI"}],7:[function(require,module,exports){
+}).call(this,require("K/m7xv"))
+},{"K/m7xv":14,"util":"ttsnNg"}],7:[function(require,module,exports){
 /*jshint node:true, laxcomma:true */
 
 var Set = function() {
@@ -894,14 +895,14 @@ console.groupEnd();
 console.log("Started.");
 console.groupEnd();
 
-}).call(this,require("UPikzY"))
-},{"./lib/config":1,"./lib/helpers":2,"./lib/logger":3,"./lib/mgmt_console":4,"./lib/process_metrics":5,"./lib/process_mgmt":6,"./lib/set":7,"UPikzY":14,"dgram":"ICJKhd","events":"2rLo4h","fs":"ICJKhd","net":"ICJKhd","util":"WE+poI"}],"ICJKhd":[function(require,module,exports){
+}).call(this,require("K/m7xv"))
+},{"./lib/config":1,"./lib/helpers":2,"./lib/logger":3,"./lib/mgmt_console":4,"./lib/process_metrics":5,"./lib/process_mgmt":6,"./lib/set":7,"K/m7xv":14,"dgram":"moCkre","events":"+0DNuN","fs":"moCkre","net":"moCkre","util":"ttsnNg"}],"moCkre":[function(require,module,exports){
 
 },{}],"fs":[function(require,module,exports){
-module.exports=require('ICJKhd');
+module.exports=require('moCkre');
 },{}],"events":[function(require,module,exports){
-module.exports=require('2rLo4h');
-},{}],"2rLo4h":[function(require,module,exports){
+module.exports=require('+0DNuN');
+},{}],"+0DNuN":[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -1303,7 +1304,7 @@ module.exports = function isBuffer(arg) {
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],"WE+poI":[function(require,module,exports){
+},{}],"ttsnNg":[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -1892,7 +1893,7 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-}).call(this,require("UPikzY"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":15,"UPikzY":14,"inherits":13}],"util":[function(require,module,exports){
-module.exports=require('WE+poI');
+}).call(this,require("K/m7xv"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":15,"K/m7xv":14,"inherits":13}],"util":[function(require,module,exports){
+module.exports=require('ttsnNg');
 },{}]},{},[8])
