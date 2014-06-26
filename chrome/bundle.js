@@ -19,9 +19,6 @@ module.exports=require('8gIcJN');
 
 var net = require('net');
 
-// this will be instantiated to the logger
-var l;
-
 var debug;
 var flushInterval;
 var graphiteHost;
@@ -1554,7 +1551,7 @@ function flushMetrics() {
   pm.process_metrics(metrics_hash, flushInterval, time_stamp, function emitFlush(metrics) {
     backendEvents.emit('flush', time_stamp, metrics);
   });
-                          console.log("Flushed");
+                          console.log("Flushed.");
 }
 
 var stats = {

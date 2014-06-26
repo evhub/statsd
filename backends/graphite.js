@@ -16,9 +16,6 @@
 
 var net = require('net');
 
-// this will be instantiated to the logger
-var l;
-
 var debug;
 var flushInterval;
 var graphiteHost;

@@ -4,7 +4,6 @@ var util = require('util')
   , dgram = require('dgram')
   , logger = require('../lib/logger');
 
-var l;
 var debug;
 
 function RepeaterBackend(startupTime, config, emitter){
