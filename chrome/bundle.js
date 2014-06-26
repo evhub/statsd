@@ -852,6 +852,7 @@ var events = require('events');
 var util = require('util');
 var Stream = require('stream');
 var Buffer = require('buffer').Buffer;
+var socketAPI = chrome.socket || chrome.experimental.socket;
 
 var stringToArrayBuffer = function(str) {
   var buffer = new ArrayBuffer(str.length);
@@ -973,9 +974,9 @@ net.Server.prototype.listen = function() {
 
   self._serverSocket.on("_created", function() {
     // Socket created, now turn it into a server socket.
-    chrome.socket.listen(self._serverSocket._socketInfo.socketId, options.host, options.port, options.backlog, function() {
+    socketAPI.listen(self._serverSocket._socketInfo.socketId, options.host, options.port, options.backlog, function() {
       self.emit('listening');
-      chrome.socket.accept(self._serverSocket._socketInfo.socketId, self._accept.bind(self))
+      socketAPI.accept(self._serverSocket._socketInfo.socketId, self._accept.bind(self))
     }); 
   });
 };
@@ -987,7 +988,7 @@ net.Server.prototype._accept = function(acceptInfo) {
   
   socket._socketInfo = acceptInfo;
   self.emit("connection", socket);
-  chrome.socket.accept(self._serverSocket._socketInfo.socketId, self._accept.bind(self))
+  socketAPI.accept(self._serverSocket._socketInfo.socketId, self._accept.bind(self))
 };
 
 net.Server.prototype.close = function(callback) {
@@ -1008,7 +1009,7 @@ net.Socket = function(options) {
   this._socketInfo = 0;
   this._encoding;
   
-  chrome.socket.create("tcp", {}, function(createInfo) {
+  socketAPI.create("tcp", {}, function(createInfo) {
     self._socketInfo = createInfo;
     self.emit("_created"); // This event doesn't exist in the API, it is here because Chrome is async 
     // start trying to read
@@ -1059,7 +1060,7 @@ net.Socket.prototype.connect = function() {
   cb = (typeof cb === 'function') ? cb : function() {};
   self.on('connect', cb);
   
-  chrome.socket.connect(self._socketInfo.socketId, options.host, options.port, function(result) {
+  socketAPI.connect(self._socketInfo.socketId, options.host, options.port, function(result) {
     if(result == 0) {
       self.emit('connect');
     } 
@@ -1070,8 +1071,8 @@ net.Socket.prototype.connect = function() {
 };
 
 net.Socket.prototype.destroy = function() {
-  chrome.socket.disconnect(this._socketInfo.socketId);
-  chrome.socket.destroy(this._socketInfo.socketId);
+  socketAPI.disconnect(this._socketInfo.socketId);
+  socketAPI.destroy(this._socketInfo.socketId);
 };
 net.Socket.prototype.destroySoon = function() {};
 net.Socket.prototype.setEncoding = function(encoding) {
@@ -1080,18 +1081,18 @@ net.Socket.prototype.setEncoding = function(encoding) {
 
 net.Socket.prototype.setNoDelay = function(noDelay) {
   noDelay = (noDelay === undefined) ? true : noDelay;
-  chrome.socket.setNoDely(self._socketInfo.socketId, noDelay, function() {});
+  socketAPI.setNoDely(self._socketInfo.socketId, noDelay, function() {});
 };
 
 net.Socket.prototype.setKeepAlive = function(enable, delay) {
   enable = (enable === 'undefined') ? false : enable;
   delay = (delay === 'undefined') ? 0 : delay;
-  chrome.socket.setKeepAlive(self._socketInfo.socketId, enable, initialDelay, function() {});
+  socketAPI.setKeepAlive(self._socketInfo.socketId, enable, initialDelay, function() {});
 };
 
 net.Socket.prototype._read = function() {
   var self = this;
-  chrome.socket.read(self._socketInfo.socketId, function(readInfo) {
+  socketAPI.read(self._socketInfo.socketId, function(readInfo) {
     if(readInfo.resultCode < 0) return; 
     // ArrayBuffer to Buffer if no encoding.
     var buffer = arrayBufferToBuffer(readInfo.data);
@@ -1121,7 +1122,7 @@ net.Socket.prototype.write = function(data, encoding, callback) {
 
   self._resetTimeout();
 
-  chrome.socket.write(self._socketInfo.socketId, buffer, function(writeInfo) {
+  socketAPI.write(self._socketInfo.socketId, buffer, function(writeInfo) {
     callback(); 
   });
 

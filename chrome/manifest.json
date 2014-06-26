@@ -13,5 +13,17 @@
         "udp": {
             "receive": ""
         }
-    }
+    },
+    "permissions": [
+        {
+            "socket": [
+                       "udp-bind:*:*",
+                       "tcp-connect:*:*"
+                       ]
+            },
+        "fileSystem",
+        "fileSystemProvider",
+        "fileBrowserHandler",
+        "experimental"
+    ]
 }
