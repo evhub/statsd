@@ -22,7 +22,6 @@
                        ]
             },
         "fileSystem",
-        "fileSystemProvider",
         "fileBrowserHandler",
         "experimental"
     ]
