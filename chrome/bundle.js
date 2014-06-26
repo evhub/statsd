@@ -1414,6 +1414,9 @@ Object.defineProperty(net.Socket.prototype, 'bufferSize', {
 /*jshint node:true, laxcomma:true */
 console.group("Starting...");
 
+// Global for the logger
+var l;
+
 document.addEventListener('DOMContentLoaded', function () {
 console.group("Running...");
 
@@ -1562,8 +1565,6 @@ var stats = {
 };
 
                           console.log("5. Config");
-// Global for the logger
-var l;
 
 config.configFile("Config.js", function (newConfig, oldConfig) {
                   console.log("Configuring...");
