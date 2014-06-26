@@ -5,9 +5,9 @@ document.addEventListener('DOMContentLoaded', function () {
 console.group("Running...");
 
                           console.log("1. Imports");
-var dgram  = require('dgram')
+var dgram  = require('chrome-dgram')
   , util    = require('util')
-  , net    = require('net')
+  , net    = require('net-chromeify')
   , config = require('./lib/config')
   , helpers = require('./lib/helpers')
   , fs     = require('fs')
