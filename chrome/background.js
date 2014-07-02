@@ -2,7 +2,7 @@ console.group("Installing...");
 
 chrome.app.runtime.onLaunched.addListener(function() {
                                           
-                                          console.group("Loading...");
+                                          console.group("Launching...");
                                           
                                           chrome.app.window.create("display.html", {
                                                                    id: "mainwin",
@@ -12,7 +12,7 @@ chrome.app.runtime.onLaunched.addListener(function() {
                                                                         }
                                                                    });
                                           
-                                          console.log("Loaded.");
+                                          console.log("Launched.");
                                           console.groupEnd();
                                           
                                           });

@@ -32,6 +32,7 @@ function clear() {
 };
 
 clear()
+display("Loading...");
 
 function AppBackend(startupTime, config, emitter){
   var self = this;

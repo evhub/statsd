@@ -1,11 +1,11 @@
 /*jshint node:true, laxcomma:true */
-console.group("Starting...");
+console.group("Initializing...");
 
 // Global for the logger
 var l;
 
 document.addEventListener('DOMContentLoaded', function () {
-console.group("Running...");
+console.group("Loading...");
 
                           console.log("1. Imports");
 var dgram  = require('chrome-dgram')
@@ -61,7 +61,7 @@ var conf;
                           console.log("4. Flush");
 // Flush metrics to each backend.
 function flushMetrics() {
-                          console.log("Flushing...");
+                          console.group("Flushing...");
   var time_stamp = Math.round(new Date().getTime() / 1000);
   if (old_timestamp > 0) {
     gauges[timestamp_lag_namespace] = (time_stamp - old_timestamp - (Number(conf.flushInterval)/1000));
@@ -142,6 +142,7 @@ function flushMetrics() {
     backendEvents.emit('flush', time_stamp, metrics);
   });
                           console.log("Flushed.");
+                          console.groupEnd();
 }
 
 var stats = {
@@ -154,7 +155,7 @@ var stats = {
                           console.log("5. Config");
 
 config.configFile("Config.js", function (newConfig, oldConfig) {
-                  console.log("Configuring...");
+                  console.group("Configuring...");
   conf = newConfig;
 
   process_mgmt.init(newConfig);
@@ -426,6 +427,7 @@ config.configFile("Config.js", function (newConfig, oldConfig) {
     }
   }
                                 console.log("Configured.");
+                                console.groupEnd();
 });
 
                   console.log("6. Process");
@@ -433,8 +435,8 @@ process.on('exit', function () {
   flushMetrics();
 });
 
-console.log("Complete.");
+console.log("Loaded.");
 console.groupEnd();
 });
-console.log("Started.");
+console.log("Initialized.");
 console.groupEnd();
