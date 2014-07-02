@@ -51,7 +51,7 @@ var post_stats = function graphite_post_stats(statString) {
       var graphite = net.createConnection(graphitePort, graphiteHost);
       graphite.addListener('error', function(connectionException){
         if (debug) {
-          l.log(connectionException);
+          console.log(connectionException);
         }
       });
       graphite.on('connect', function() {
@@ -72,7 +72,7 @@ var post_stats = function graphite_post_stats(statString) {
       });
     } catch(e){
       if (debug) {
-        l.log(e);
+        console.log(e);
       }
       graphiteStats.last_exception = Math.round(new Date().getTime() / 1000);
     }
@@ -123,7 +123,7 @@ var flush_stats = function graphite_flush(ts, metrics) {
       } else {
         for (var timer_data_sub_key in timer_data[key][timer_data_key]) {
           if (debug) {
-            l.log(timer_data[key][timer_data_key][timer_data_sub_key].toString());
+            console.log(timer_data[key][timer_data_key][timer_data_sub_key].toString());
           }
           statString += the_key + '.' + timer_data_key + '.' + timer_data_sub_key + globalSuffix +
                         timer_data[key][timer_data_key][timer_data_sub_key] + ts_suffix;
@@ -163,7 +163,7 @@ var flush_stats = function graphite_flush(ts, metrics) {
   post_stats(statString);
 
   if (debug) {
-   l.log("numStats: " + numStats);
+   console.log("numStats: " + numStats);
   }
 };
 
