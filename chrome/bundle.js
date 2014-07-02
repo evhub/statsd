@@ -74,7 +74,7 @@ var Configurator = function (file) {
                 graphitePort: 2003
               , graphiteHost: "graphite.example.com"
               , port: 8125
-              , backends: [ "./backends/console" ]
+              , backends: [ "./backends/console.js" ]
               , dumpMessages: true
               , debug: true
               , log: {
@@ -1604,8 +1604,8 @@ config.configFile("Config.js", function (newConfig, oldConfig) {
         loadBackend(newConfig, newConfig.backends[i]);
       }
     } else {
-      // The default backend is graphite
-      loadBackend(newConfig, './backends/graphite');
+      // The default backend is the console
+      loadBackend(newConfig, './backends/console.js');
     }
 
     // Setup the flush timer

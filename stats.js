@@ -384,8 +384,8 @@ config.configFile("Config.js", function (newConfig, oldConfig) {
         loadBackend(newConfig, newConfig.backends[i]);
       }
     } else {
-      // The default backend is graphite
-      loadBackend(newConfig, './backends/graphite');
+      // The default backend is the console
+      loadBackend(newConfig, './backends/console.js');
     }
 
     // Setup the flush timer
