@@ -1,11 +1,10 @@
-require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({"./backends/app.js":[function(require,module,exports){
-module.exports=require('jNyRMd');
-},{}],"jNyRMd":[function(require,module,exports){
+require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({"jNyRMd":[function(require,module,exports){
 /*jshint node:true, laxcomma:true */
 
 var util = require('util');
 var mainwin = document;
 var log = mainwin.getElementById("log");
+var l;
 
 function formatHTML(inputstring) {
     return inputstring.replace("<", "&lt;").replace(">", "&gt;").replace("&", "&amp;");
@@ -84,15 +83,19 @@ AppBackend.prototype.status = function(write) {
   }, this);
 };
 
-exports.init = function(startupTime, config, events) {
+exports.init = function(startupTime, config, events, logger) {
+  l = logger;
   var instance = new AppBackend(startupTime, config, events);
   return true;
 };
 
-},{"util":39}],"54vTgN":[function(require,module,exports){
+},{"util":39}],"./backends/app.js":[function(require,module,exports){
+module.exports=require('jNyRMd');
+},{}],"54vTgN":[function(require,module,exports){
 /*jshint node:true, laxcomma:true */
 
 var util = require('util');
+var l;
 
 function ConsoleBackend(startupTime, config, emitter){
   var self = this;
@@ -138,7 +141,8 @@ ConsoleBackend.prototype.status = function(write) {
   }, this);
 };
 
-exports.init = function(startupTime, config, events) {
+exports.init = function(startupTime, config, events, logger) {
+  l = logger;
   var instance = new ConsoleBackend(startupTime, config, events);
   return true;
 };
@@ -164,9 +168,10 @@ module.exports=require('8gIcJN');
  *   graphitePort: Port to contact graphite server at.
  */
 
-var net = require('net');
+var net = require('net-chromeify');
 
 var debug;
+var l;
 var flushInterval;
 var graphiteHost;
 var graphitePort;
@@ -201,7 +206,7 @@ var post_stats = function graphite_post_stats(statString) {
       var graphite = net.createConnection(graphitePort, graphiteHost);
       graphite.addListener('error', function(connectionException){
         if (debug) {
-          console.log(connectionException);
+          l.log(connectionException);
         }
       });
       graphite.on('connect', function() {
@@ -220,9 +225,9 @@ var post_stats = function graphite_post_stats(statString) {
         graphiteStats.flush_length = statString.length;
         graphiteStats.last_flush = Math.round(new Date().getTime() / 1000);
       });
-    } catch(e){
+    } catch(e) {
       if (debug) {
-        console.log(e);
+        l.log(e);
       }
       graphiteStats.last_exception = Math.round(new Date().getTime() / 1000);
     }
@@ -273,7 +278,7 @@ var flush_stats = function graphite_flush(ts, metrics) {
       } else {
         for (var timer_data_sub_key in timer_data[key][timer_data_key]) {
           if (debug) {
-            console.log(timer_data[key][timer_data_key][timer_data_sub_key].toString());
+            l.log(timer_data[key][timer_data_key][timer_data_sub_key].toString());
           }
           statString += the_key + '.' + timer_data_key + '.' + timer_data_sub_key + globalSuffix +
                         timer_data[key][timer_data_key][timer_data_sub_key] + ts_suffix;
@@ -313,7 +318,7 @@ var flush_stats = function graphite_flush(ts, metrics) {
   post_stats(statString);
 
   if (debug) {
-   console.log("numStats: " + numStats);
+   l.log("numStats: " + numStats);
   }
 };
 
@@ -325,7 +330,11 @@ var backend_status = function graphite_status(writeCb) {
 
 exports.init = function graphite_init(startup_time, config, events, logger) {
   debug = config.debug;
-  l = logger;
+    if (typeof(logger) === "undefined") {
+        l = console;
+    } else {
+        l = logger;
+    };
   graphiteHost = config.graphiteHost;
   graphitePort = config.graphitePort;
   config.graphite = config.graphite || {};
@@ -394,7 +403,7 @@ exports.init = function graphite_init(startup_time, config, events, logger) {
   return true;
 };
 
-},{"net":17}],7:[function(require,module,exports){
+},{"net-chromeify":15}],7:[function(require,module,exports){
 /*jshint node:true, laxcomma:true */
 
 var fs  = require('fs')

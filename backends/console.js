@@ -1,6 +1,7 @@
 /*jshint node:true, laxcomma:true */
 
 var util = require('util');
+var l;
 
 function ConsoleBackend(startupTime, config, emitter){
   var self = this;
@@ -46,7 +47,8 @@ ConsoleBackend.prototype.status = function(write) {
   }, this);
 };
 
-exports.init = function(startupTime, config, events) {
+exports.init = function(startupTime, config, events, logger) {
+  l = logger;
   var instance = new ConsoleBackend(startupTime, config, events);
   return true;
 };

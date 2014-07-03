@@ -3,6 +3,7 @@
 var util = require('util');
 var mainwin = document;
 var log = mainwin.getElementById("log");
+var l;
 
 function formatHTML(inputstring) {
     return inputstring.replace("<", "&lt;").replace(">", "&gt;").replace("&", "&amp;");
@@ -81,7 +82,8 @@ AppBackend.prototype.status = function(write) {
   }, this);
 };
 
-exports.init = function(startupTime, config, events) {
+exports.init = function(startupTime, config, events, logger) {
+  l = logger;
   var instance = new AppBackend(startupTime, config, events);
   return true;
 };
