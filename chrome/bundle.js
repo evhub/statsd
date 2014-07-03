@@ -89,7 +89,7 @@ exports.init = function(startupTime, config, events) {
   return true;
 };
 
-},{"util":37}],"54vTgN":[function(require,module,exports){
+},{"util":39}],"54vTgN":[function(require,module,exports){
 /*jshint node:true, laxcomma:true */
 
 var util = require('util');
@@ -143,9 +143,258 @@ exports.init = function(startupTime, config, events) {
   return true;
 };
 
-},{"util":37}],"./backends/console.js":[function(require,module,exports){
+},{"util":39}],"./backends/console.js":[function(require,module,exports){
 module.exports=require('54vTgN');
-},{}],5:[function(require,module,exports){
+},{}],"./backends/graphite.js":[function(require,module,exports){
+module.exports=require('8gIcJN');
+},{}],"8gIcJN":[function(require,module,exports){
+/*jshint node:true, laxcomma:true */
+
+/*
+ * Flush stats to graphite (http://graphite.wikidot.com/).
+ *
+ * To enable this backend, include 'graphite' in the backends
+ * configuration array:
+ *
+ *   backends: ['graphite']
+ *
+ * This backend supports the following config options:
+ *
+ *   graphiteHost: Hostname of graphite server.
+ *   graphitePort: Port to contact graphite server at.
+ */
+
+var net = require('net');
+
+var debug;
+var flushInterval;
+var graphiteHost;
+var graphitePort;
+var flush_counts;
+
+// prefix configuration
+var globalPrefix;
+var prefixPersecond;
+var prefixCounter;
+var prefixTimer;
+var prefixGauge;
+var prefixSet;
+var globalSuffix;
+
+// set up namespaces
+var legacyNamespace  = true;
+var globalNamespace  = [];
+var counterNamespace = [];
+var timerNamespace   = [];
+var gaugesNamespace  = [];
+var setsNamespace    = [];
+
+var graphiteStats = {};
+
+var post_stats = function graphite_post_stats(statString) {
+  var last_flush = graphiteStats.last_flush || 0;
+  var last_exception = graphiteStats.last_exception || 0;
+  var flush_time = graphiteStats.flush_time || 0;
+  var flush_length = graphiteStats.flush_length || 0;
+  if (graphiteHost) {
+    try {
+      var graphite = net.createConnection(graphitePort, graphiteHost);
+      graphite.addListener('error', function(connectionException){
+        if (debug) {
+          console.log(connectionException);
+        }
+      });
+      graphite.on('connect', function() {
+        var ts = Math.round(new Date().getTime() / 1000);
+        var ts_suffix = ' ' + ts + "\n";
+        var namespace = globalNamespace.concat(prefixStats).join(".");
+        statString += namespace + '.graphiteStats.last_exception' + globalSuffix + last_exception + ts_suffix;
+        statString += namespace + '.graphiteStats.last_flush'     + globalSuffix + last_flush     + ts_suffix;
+        statString += namespace + '.graphiteStats.flush_time'     + globalSuffix + flush_time     + ts_suffix;
+        statString += namespace + '.graphiteStats.flush_length'   + globalSuffix + flush_length   + ts_suffix;
+
+        var starttime = Date.now();
+        this.write(statString);
+        this.end();
+        graphiteStats.flush_time = (Date.now() - starttime);
+        graphiteStats.flush_length = statString.length;
+        graphiteStats.last_flush = Math.round(new Date().getTime() / 1000);
+      });
+    } catch(e){
+      if (debug) {
+        console.log(e);
+      }
+      graphiteStats.last_exception = Math.round(new Date().getTime() / 1000);
+    }
+  }
+};
+
+var flush_stats = function graphite_flush(ts, metrics) {
+  var ts_suffix = ' ' + ts + "\n";
+  var starttime = Date.now();
+  var statString = '';
+  var numStats = 0;
+  var key;
+  var timer_data_key;
+  var counters = metrics.counters;
+  var gauges = metrics.gauges;
+  var timers = metrics.timers;
+  var sets = metrics.sets;
+  var counter_rates = metrics.counter_rates;
+  var timer_data = metrics.timer_data;
+  var statsd_metrics = metrics.statsd_metrics;
+
+  for (key in counters) {
+    var namespace = counterNamespace.concat(key);
+    var value = counters[key];
+    var valuePerSecond = counter_rates[key]; // pre-calculated "per second" rate
+
+    if (legacyNamespace === true) {
+      statString += namespace.join(".")   + globalSuffix + valuePerSecond + ts_suffix;
+      if (flush_counts) {
+        statString += 'stats_counts.' + key + globalSuffix + value + ts_suffix;
+      }
+    } else {
+      statString += namespace.concat('rate').join(".")  + globalSuffix + valuePerSecond + ts_suffix;
+      if (flush_counts) {
+        statString += namespace.concat('count').join(".") + globalSuffix + value + ts_suffix;
+      }
+    }
+
+    numStats += 1;
+  }
+
+  for (key in timer_data) {
+    var namespace = timerNamespace.concat(key);
+    var the_key = namespace.join(".");
+    for (timer_data_key in timer_data[key]) {
+      if (typeof(timer_data[key][timer_data_key]) === 'number') {
+        statString += the_key + '.' + timer_data_key + globalSuffix + timer_data[key][timer_data_key] + ts_suffix;
+      } else {
+        for (var timer_data_sub_key in timer_data[key][timer_data_key]) {
+          if (debug) {
+            console.log(timer_data[key][timer_data_key][timer_data_sub_key].toString());
+          }
+          statString += the_key + '.' + timer_data_key + '.' + timer_data_sub_key + globalSuffix +
+                        timer_data[key][timer_data_key][timer_data_sub_key] + ts_suffix;
+        }
+      }
+    }
+    numStats += 1;
+  }
+
+  for (key in gauges) {
+    var namespace = gaugesNamespace.concat(key);
+    statString += namespace.join(".") + globalSuffix + gauges[key] + ts_suffix;
+    numStats += 1;
+  }
+
+  for (key in sets) {
+    var namespace = setsNamespace.concat(key);
+    statString += namespace.join(".") + '.count' + globalSuffix + sets[key].values().length + ts_suffix;
+    numStats += 1;
+  }
+
+  var namespace = globalNamespace.concat(prefixStats);
+  if (legacyNamespace === true) {
+    statString += prefixStats + '.numStats' + globalSuffix + numStats + ts_suffix;
+    statString += 'stats.' + prefixStats + '.graphiteStats.calculationtime' + globalSuffix + (Date.now() - starttime) + ts_suffix;
+    for (key in statsd_metrics) {
+      statString += 'stats.' + prefixStats + '.' + key + globalSuffix + statsd_metrics[key] + ts_suffix;
+    }
+  } else {
+    statString += namespace.join(".") + '.numStats' + globalSuffix + numStats + ts_suffix;
+    statString += namespace.join(".") + '.graphiteStats.calculationtime' + globalSuffix + (Date.now() - starttime) + ts_suffix;
+    for (key in statsd_metrics) {
+      var the_key = namespace.concat(key);
+      statString += the_key.join(".") + globalSuffix + statsd_metrics[key] + ts_suffix;
+    }
+  }
+  post_stats(statString);
+
+  if (debug) {
+   console.log("numStats: " + numStats);
+  }
+};
+
+var backend_status = function graphite_status(writeCb) {
+  for (var stat in graphiteStats) {
+    writeCb(null, 'graphite', stat, graphiteStats[stat]);
+  }
+};
+
+exports.init = function graphite_init(startup_time, config, events, logger) {
+  debug = config.debug;
+  l = logger;
+  graphiteHost = config.graphiteHost;
+  graphitePort = config.graphitePort;
+  config.graphite = config.graphite || {};
+  globalPrefix    = config.graphite.globalPrefix;
+  prefixCounter   = config.graphite.prefixCounter;
+  prefixTimer     = config.graphite.prefixTimer;
+  prefixGauge     = config.graphite.prefixGauge;
+  prefixSet       = config.graphite.prefixSet;
+  globalSuffix    = config.graphite.globalSuffix;
+  legacyNamespace = config.graphite.legacyNamespace;
+
+  // set defaults for prefixes & suffix
+  globalPrefix  = globalPrefix !== undefined ? globalPrefix : "stats";
+  prefixCounter = prefixCounter !== undefined ? prefixCounter : "counters";
+  prefixTimer   = prefixTimer !== undefined ? prefixTimer : "timers";
+  prefixGauge   = prefixGauge !== undefined ? prefixGauge : "gauges";
+  prefixSet     = prefixSet !== undefined ? prefixSet : "sets";
+  legacyNamespace = legacyNamespace !== undefined ? legacyNamespace : true;
+
+  // In order to unconditionally add this string, it either needs to be
+  // a single space if it was unset, OR surrounded by a . and a space if
+  // it was set.
+  globalSuffix  = globalSuffix !== undefined ? '.' + globalSuffix + ' ' : ' ';
+
+  if (legacyNamespace === false) {
+    if (globalPrefix !== "") {
+      globalNamespace.push(globalPrefix);
+      counterNamespace.push(globalPrefix);
+      timerNamespace.push(globalPrefix);
+      gaugesNamespace.push(globalPrefix);
+      setsNamespace.push(globalPrefix);
+    }
+
+    if (prefixCounter !== "") {
+      counterNamespace.push(prefixCounter);
+    }
+    if (prefixTimer !== "") {
+      timerNamespace.push(prefixTimer);
+    }
+    if (prefixGauge !== "") {
+      gaugesNamespace.push(prefixGauge);
+    }
+    if (prefixSet !== "") {
+      setsNamespace.push(prefixSet);
+    }
+  } else {
+      globalNamespace = ['stats'];
+      counterNamespace = ['stats'];
+      timerNamespace = ['stats', 'timers'];
+      gaugesNamespace = ['stats', 'gauges'];
+      setsNamespace = ['stats', 'sets'];
+  }
+
+  graphiteStats.last_flush = startup_time;
+  graphiteStats.last_exception = startup_time;
+  graphiteStats.flush_time = 0;
+  graphiteStats.flush_length = 0;
+
+  flushInterval = config.flushInterval;
+
+  flush_counts = typeof(config.flush_counts) === "undefined" ? true : config.flush_counts;
+
+  events.on('flush', flush_stats);
+  events.on('status', backend_status);
+
+  return true;
+};
+
+},{"net":17}],7:[function(require,module,exports){
 /*jshint node:true, laxcomma:true */
 
 var fs  = require('fs')
@@ -162,10 +411,10 @@ var Configurator = function (file) {
 
       if (file == "Config.js") {
           self.config = {
-                graphitePort: 2003
-              , graphiteHost: "graphite.example.com"
+                graphitePort: 8080
+              , graphiteHost: "localhost"
               , port: 8125
-              , backends: [ "./backends/console.js", "./backends/app.js" ]
+              , backends: [ "./backends/console.js", "./backends/app.js", "./backends/graphite.js" ]
               , dumpMessages: true
               , debug: true
               , log: {
@@ -207,7 +456,7 @@ exports.configFile = function(file, callbackFunc) {
 };
 
 
-},{"fs":15,"util":37}],6:[function(require,module,exports){
+},{"fs":17,"util":39}],8:[function(require,module,exports){
 /**
  * Public: test function to filter out malformed packets
  *
@@ -254,7 +503,7 @@ function is_valid_packet(fields) {
 
 exports.is_valid_packet = is_valid_packet;
 
-},{}],7:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 /*jshint node:true, laxcomma:true */
 
 var Logger = function (config) {
@@ -297,7 +546,7 @@ Logger.prototype = {
 
 exports.Logger = Logger;
 
-},{"util":37}],8:[function(require,module,exports){
+},{"util":39}],10:[function(require,module,exports){
 /*jshint node:true, laxcomma:true */
 
 /**
@@ -368,7 +617,7 @@ function existing_stats(stats_type, bucket){
 
 exports.existing_stats = existing_stats;
 
-},{}],9:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 /*jshint node:true, laxcomma:true */
 
 var process_metrics = function (metrics, flushInterval, ts, flushCallback) {
@@ -517,7 +766,7 @@ var process_metrics = function (metrics, flushInterval, ts, flushCallback) {
 
 exports.process_metrics = process_metrics;
 
-},{}],10:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 (function (process){
 var util = require('util');
 
@@ -551,8 +800,8 @@ exports.set_title = function(config) {
  }
 }
 
-}).call(this,require("K/m7xv"))
-},{"K/m7xv":21,"util":37}],11:[function(require,module,exports){
+}).call(this,require("UPikzY"))
+},{"UPikzY":23,"util":39}],13:[function(require,module,exports){
 /*jshint node:true, laxcomma:true */
 
 var Set = function() {
@@ -586,7 +835,7 @@ Set.prototype = {
 
 exports.Set = Set;
 
-},{}],12:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 (function (Buffer){
 /**
  * UDP / Datagram Sockets
@@ -980,7 +1229,7 @@ Socket.prototype.ref = function () {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":16,"events":19,"util":37}],13:[function(require,module,exports){
+},{"buffer":18,"events":21,"util":39}],15:[function(require,module,exports){
 /*
    Copyright 2012 Google Inc
 
@@ -1307,7 +1556,7 @@ Object.defineProperty(net.Socket.prototype, 'bufferSize', {
   get: function() {}
 });
 
-},{"buffer":16,"events":19,"stream":35,"util":37}],14:[function(require,module,exports){
+},{"buffer":18,"events":21,"stream":37,"util":39}],16:[function(require,module,exports){
 (function (process){
 /*jshint node:true, laxcomma:true */
 console.group("Initializing...");
@@ -1752,10 +2001,10 @@ console.groupEnd();
 console.log("Initialized.");
 console.groupEnd();
 
-}).call(this,require("K/m7xv"))
-},{"./lib/config":5,"./lib/helpers":6,"./lib/logger":7,"./lib/mgmt_console":8,"./lib/process_metrics":9,"./lib/process_mgmt":10,"./lib/set":11,"K/m7xv":21,"chrome-dgram":12,"events":19,"fs":15,"net-chromeify":13,"util":37}],15:[function(require,module,exports){
+}).call(this,require("UPikzY"))
+},{"./lib/config":7,"./lib/helpers":8,"./lib/logger":9,"./lib/mgmt_console":10,"./lib/process_metrics":11,"./lib/process_mgmt":12,"./lib/set":13,"UPikzY":23,"chrome-dgram":14,"events":21,"fs":17,"net-chromeify":15,"util":39}],17:[function(require,module,exports){
 
-},{}],16:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 /*!
  * The buffer module from node.js, for the browser.
  *
@@ -2906,7 +3155,7 @@ function assert (test, message) {
   if (!test) throw new Error(message || 'Failed assertion')
 }
 
-},{"base64-js":17,"ieee754":18}],17:[function(require,module,exports){
+},{"base64-js":19,"ieee754":20}],19:[function(require,module,exports){
 var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 ;(function (exports) {
@@ -3028,7 +3277,7 @@ var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 	exports.fromByteArray = uint8ToBase64
 }(typeof exports === 'undefined' ? (this.base64js = {}) : exports))
 
-},{}],18:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 exports.read = function(buffer, offset, isLE, mLen, nBytes) {
   var e, m,
       eLen = nBytes * 8 - mLen - 1,
@@ -3114,7 +3363,7 @@ exports.write = function(buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128;
 };
 
-},{}],19:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -3419,7 +3668,7 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],20:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -3444,7 +3693,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],21:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -3509,10 +3758,10 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],22:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 module.exports = require("./lib/_stream_duplex.js")
 
-},{"./lib/_stream_duplex.js":23}],23:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":25}],25:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -3604,8 +3853,8 @@ function forEach (xs, f) {
   }
 }
 
-}).call(this,require("K/m7xv"))
-},{"./_stream_readable":25,"./_stream_writable":27,"K/m7xv":21,"core-util-is":28,"inherits":20}],24:[function(require,module,exports){
+}).call(this,require("UPikzY"))
+},{"./_stream_readable":27,"./_stream_writable":29,"UPikzY":23,"core-util-is":30,"inherits":22}],26:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -3653,7 +3902,7 @@ PassThrough.prototype._transform = function(chunk, encoding, cb) {
   cb(null, chunk);
 };
 
-},{"./_stream_transform":26,"core-util-is":28,"inherits":20}],25:[function(require,module,exports){
+},{"./_stream_transform":28,"core-util-is":30,"inherits":22}],27:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -4615,8 +4864,8 @@ function indexOf (xs, x) {
   return -1;
 }
 
-}).call(this,require("K/m7xv"))
-},{"K/m7xv":21,"buffer":16,"core-util-is":28,"events":19,"inherits":20,"isarray":29,"stream":35,"string_decoder/":30}],26:[function(require,module,exports){
+}).call(this,require("UPikzY"))
+},{"UPikzY":23,"buffer":18,"core-util-is":30,"events":21,"inherits":22,"isarray":31,"stream":37,"string_decoder/":32}],28:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -4828,7 +5077,7 @@ function done(stream, er) {
   return stream.push(null);
 }
 
-},{"./_stream_duplex":23,"core-util-is":28,"inherits":20}],27:[function(require,module,exports){
+},{"./_stream_duplex":25,"core-util-is":30,"inherits":22}],29:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -5218,8 +5467,8 @@ function endWritable(stream, state, cb) {
   state.ended = true;
 }
 
-}).call(this,require("K/m7xv"))
-},{"./_stream_duplex":23,"K/m7xv":21,"buffer":16,"core-util-is":28,"inherits":20,"stream":35}],28:[function(require,module,exports){
+}).call(this,require("UPikzY"))
+},{"./_stream_duplex":25,"UPikzY":23,"buffer":18,"core-util-is":30,"inherits":22,"stream":37}],30:[function(require,module,exports){
 (function (Buffer){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -5329,12 +5578,12 @@ function objectToString(o) {
   return Object.prototype.toString.call(o);
 }
 }).call(this,require("buffer").Buffer)
-},{"buffer":16}],29:[function(require,module,exports){
+},{"buffer":18}],31:[function(require,module,exports){
 module.exports = Array.isArray || function (arr) {
   return Object.prototype.toString.call(arr) == '[object Array]';
 };
 
-},{}],30:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -5536,10 +5785,10 @@ function base64DetectIncompleteChar(buffer) {
   return incomplete;
 }
 
-},{"buffer":16}],31:[function(require,module,exports){
+},{"buffer":18}],33:[function(require,module,exports){
 module.exports = require("./lib/_stream_passthrough.js")
 
-},{"./lib/_stream_passthrough.js":24}],32:[function(require,module,exports){
+},{"./lib/_stream_passthrough.js":26}],34:[function(require,module,exports){
 exports = module.exports = require('./lib/_stream_readable.js');
 exports.Readable = exports;
 exports.Writable = require('./lib/_stream_writable.js');
@@ -5547,13 +5796,13 @@ exports.Duplex = require('./lib/_stream_duplex.js');
 exports.Transform = require('./lib/_stream_transform.js');
 exports.PassThrough = require('./lib/_stream_passthrough.js');
 
-},{"./lib/_stream_duplex.js":23,"./lib/_stream_passthrough.js":24,"./lib/_stream_readable.js":25,"./lib/_stream_transform.js":26,"./lib/_stream_writable.js":27}],33:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":25,"./lib/_stream_passthrough.js":26,"./lib/_stream_readable.js":27,"./lib/_stream_transform.js":28,"./lib/_stream_writable.js":29}],35:[function(require,module,exports){
 module.exports = require("./lib/_stream_transform.js")
 
-},{"./lib/_stream_transform.js":26}],34:[function(require,module,exports){
+},{"./lib/_stream_transform.js":28}],36:[function(require,module,exports){
 module.exports = require("./lib/_stream_writable.js")
 
-},{"./lib/_stream_writable.js":27}],35:[function(require,module,exports){
+},{"./lib/_stream_writable.js":29}],37:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -5682,14 +5931,14 @@ Stream.prototype.pipe = function(dest, options) {
   return dest;
 };
 
-},{"events":19,"inherits":20,"readable-stream/duplex.js":22,"readable-stream/passthrough.js":31,"readable-stream/readable.js":32,"readable-stream/transform.js":33,"readable-stream/writable.js":34}],36:[function(require,module,exports){
+},{"events":21,"inherits":22,"readable-stream/duplex.js":24,"readable-stream/passthrough.js":33,"readable-stream/readable.js":34,"readable-stream/transform.js":35,"readable-stream/writable.js":36}],38:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],37:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -6278,5 +6527,5 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-}).call(this,require("K/m7xv"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":36,"K/m7xv":21,"inherits":20}]},{},[14])
+}).call(this,require("UPikzY"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":38,"UPikzY":23,"inherits":22}]},{},[16])
