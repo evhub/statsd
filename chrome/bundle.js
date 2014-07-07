@@ -422,6 +422,7 @@ var Configurator = function (file) {
           self.config = {
                 graphitePort: 8080
               , graphiteHost: "127.0.0.1"
+              , address: "127.0.0.1"
               , port: 8125
               , backends: [ "./backends/console.js", "./backends/app.js", "./backends/graphite.js" ]
               , dumpMessages: true
@@ -432,6 +433,7 @@ var Configurator = function (file) {
               , console: {
                     prettyprint: true
               }
+              , automaticConfigReload: false
           };
       }
       else if (file == "ProxyConfig.js") {
@@ -463,7 +465,6 @@ exports.configFile = function(file, callbackFunc) {
   var config = new Configurator(file);
   callbackFunc(config.config, config.oldConfig);
 };
-
 
 },{"fs":17,"util":39}],8:[function(require,module,exports){
 /**
@@ -809,8 +810,8 @@ exports.set_title = function(config) {
  }
 }
 
-}).call(this,require("UPikzY"))
-},{"UPikzY":23,"util":39}],13:[function(require,module,exports){
+}).call(this,require("K/m7xv"))
+},{"K/m7xv":23,"util":39}],13:[function(require,module,exports){
 /*jshint node:true, laxcomma:true */
 
 var Set = function() {
@@ -2010,8 +2011,8 @@ console.groupEnd();
 console.log("Initialized.");
 console.groupEnd();
 
-}).call(this,require("UPikzY"))
-},{"./lib/config":7,"./lib/helpers":8,"./lib/logger":9,"./lib/mgmt_console":10,"./lib/process_metrics":11,"./lib/process_mgmt":12,"./lib/set":13,"UPikzY":23,"chrome-dgram":14,"events":21,"fs":17,"net-chromeify":15,"util":39}],17:[function(require,module,exports){
+}).call(this,require("K/m7xv"))
+},{"./lib/config":7,"./lib/helpers":8,"./lib/logger":9,"./lib/mgmt_console":10,"./lib/process_metrics":11,"./lib/process_mgmt":12,"./lib/set":13,"K/m7xv":23,"chrome-dgram":14,"events":21,"fs":17,"net-chromeify":15,"util":39}],17:[function(require,module,exports){
 
 },{}],18:[function(require,module,exports){
 /*!
@@ -3862,8 +3863,8 @@ function forEach (xs, f) {
   }
 }
 
-}).call(this,require("UPikzY"))
-},{"./_stream_readable":27,"./_stream_writable":29,"UPikzY":23,"core-util-is":30,"inherits":22}],26:[function(require,module,exports){
+}).call(this,require("K/m7xv"))
+},{"./_stream_readable":27,"./_stream_writable":29,"K/m7xv":23,"core-util-is":30,"inherits":22}],26:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -4873,8 +4874,8 @@ function indexOf (xs, x) {
   return -1;
 }
 
-}).call(this,require("UPikzY"))
-},{"UPikzY":23,"buffer":18,"core-util-is":30,"events":21,"inherits":22,"isarray":31,"stream":37,"string_decoder/":32}],28:[function(require,module,exports){
+}).call(this,require("K/m7xv"))
+},{"K/m7xv":23,"buffer":18,"core-util-is":30,"events":21,"inherits":22,"isarray":31,"stream":37,"string_decoder/":32}],28:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -5476,8 +5477,8 @@ function endWritable(stream, state, cb) {
   state.ended = true;
 }
 
-}).call(this,require("UPikzY"))
-},{"./_stream_duplex":25,"UPikzY":23,"buffer":18,"core-util-is":30,"inherits":22,"stream":37}],30:[function(require,module,exports){
+}).call(this,require("K/m7xv"))
+},{"./_stream_duplex":25,"K/m7xv":23,"buffer":18,"core-util-is":30,"inherits":22,"stream":37}],30:[function(require,module,exports){
 (function (Buffer){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -6536,5 +6537,5 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-}).call(this,require("UPikzY"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":38,"UPikzY":23,"inherits":22}]},{},[16])
+}).call(this,require("K/m7xv"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":38,"K/m7xv":23,"inherits":22}]},{},[16])
