@@ -22,7 +22,6 @@
         {
             "socket": [
                        "udp-bind:*:*",
-                       "udp-send:*:*",
                        "tcp-connect:*:*"
                        ]
             },
