@@ -11,18 +11,22 @@
     },
     "sockets": {
         "udp": {
-            "receive": ""
+            "send": "",
+            "bind": ""
+        },
+        "tcp": {
+            "connect": ""
         }
     },
     "permissions": [
         {
             "socket": [
                        "udp-bind:*:*",
+                       "udp-send:*:*",
                        "tcp-connect:*:*"
                        ]
             },
         "fileSystem",
-        "fileBrowserHandler",
         "experimental"
     ]
 }
