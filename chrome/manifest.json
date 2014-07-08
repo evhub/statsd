@@ -11,11 +11,14 @@
     },
     "sockets": {
         "udp": {
-            "send": "",
-            "bind": ""
+            "send": "*",
+            "bind": "*"
         },
         "tcp": {
-            "connect": ""
+            "connect": "*"
+        },
+        "tcpServer": {
+            "listen": "*"
         }
     },
     "permissions": [

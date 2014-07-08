@@ -1526,6 +1526,7 @@ net.connect = net.createConnection = function() {
     }
   }
   else if(typeof args[0] === 'string') {
+      console.log("<!> NET ERROR");
     return; // can't do this.
   }
 
@@ -1575,6 +1576,7 @@ net.Server.prototype.listen = function() {
   }
   else {
     // throw.
+      console.log("<!> NET ERROR");
   }
 
   this._serverSocket = new net.Socket(options);
@@ -1658,6 +1660,7 @@ net.Socket.prototype.connect = function() {
   } 
   else if (typeof args[0] === 'string') {
     // throw an error, we can't do named pipes.
+      console.log("<!> NET ERROR");
   }
   else if (typeof args[0] === 'number') {
     // assume port. and host.
@@ -1730,6 +1733,7 @@ net.Socket.prototype.write = function(data, encoding, callback) {
   }
   else {
     // throw an error because we can't do anything.
+      console.log("<!> NET ERROR");
   }
 
   self._resetTimeout();

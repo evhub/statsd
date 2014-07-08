@@ -27,6 +27,7 @@ popd
 pushd /opt/graphite/conf
 sudo cp carbon.conf.example carbon.conf
 sudo cp storage-schemas.conf.example storage-schemas.conf
+sudo cp storage-aggregation.conf.example storage-aggregation.conf
 popd
 
 git clone https://github.com/graphite-project/graphite-web.git
