@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
-cd /opt/graphite
-
+pushd /opt/graphite
 sudo python bin/carbon-cache.py stop
+popd

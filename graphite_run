@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
 pushd /opt/graphite
-
 python /Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/django/bin/django-admin.py syncdb  --settings=graphite.settings --pythonpath=webapp
 sudo python bin/carbon-cache.py start --debug &
 sudo python bin/run-graphite-devel-server.py ./
-
 popd
+
+cd "$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ./graphite_end
