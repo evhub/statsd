@@ -273,8 +273,8 @@ AppBackend.prototype.flush = function(timestamp, metrics) {
         display("Waiting...");
     }
     else {
-        display("Job Count: "+out.counters["rippled.jobq.job_count"]);
-        display("Ledger Fetches: "+out.counters["rippled.ledger_fetches"]);
+        display("Job Count: "+out.counters["rippled.jobq.job_count"]+" (Rate: "+out.counter_rates["rippled.jobq.job_count"]+")");
+        display("Ledger Fetches: "+out.counters["rippled.ledger_fetches"]+" (Rate: "+out.counter_rates["rippled.ledger_fetches"]+")");
     };
 
 };
