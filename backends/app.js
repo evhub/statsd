@@ -265,16 +265,16 @@ AppBackend.prototype.flush = function(timestamp, metrics) {
  -------------------------------------------------------------------------------------- */
 
     clear()
-    display("Timestamp: "+new Date(timestamp * 1000).toString()+" (Lag: "+out.gauges.statsd.timestamp_lag+")");
-    if (out.counters.statsd.bad_lines_seen > 0) {
-        display("WARNING: Bad lines seen = "+out.counters.statsd/bad_lines_seen);
+    display("Timestamp: "+new Date(timestamp * 1000).toString()+" (Lag: "+out.gauges["statsd.timestamp_lag"]+")");
+    if (out.counters["statsd.bad_lines_seen"] > 0) {
+        display("WARNING: Bad lines seen = "+out.counters["statsd/bad_lines_seen"]);
     }
-    else if (out.counters.statsd.packets_received < 1) {
+    else if (out.counters["statsd.packets_received"] < 1) {
         display("Waiting...");
     }
     else {
-        display("Job Count: "+out.counters.rippled.jobq.job_count);
-        display("Ledger Fetches: "+out.counters.rippled.ledger_fetches);
+        display("Job Count: "+out.counters["rippled.jobq.job_count"]);
+        display("Ledger Fetches: "+out.counters["rippled.ledger_fetches"]);
     };
 
 };
