@@ -11,7 +11,7 @@ ruby -e "$(curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install)"
 brew install cairo && brew link cairo
 brew install py2cairo && brew link py2cairo
 
-cd ~/Checkout/
+pushd ~/Checkout/
 
 git clone https://github.com/graphite-project/whisper.git
 pushd whisper
@@ -39,9 +39,9 @@ pushd /opt/graphite/webapp/graphite
 sudo cp local_settings.py.example local_settings.py
 popd
 
-cd /opt/graphite
+pushd /opt/graphite
 sudo chown -R $USER: /opt/graphite
-export DJANGO_SETTINGS_MODULE=graphite.settings
-python /Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/django/bin/django-admin.py syncdb
-sudo python bin/carbon-cache.py start
-sudo python bin/run-graphite-devel-server.py ./
+popd
+
+popd
+./graphite_run.sh

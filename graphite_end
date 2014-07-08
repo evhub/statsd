@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+cd /opt/graphite
+
+sudo python bin/carbon-cache.py stop
