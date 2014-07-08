@@ -10,7 +10,7 @@ console.group("Loading...");
                           console.log("1. Imports");
 var dgram  = require('chrome-dgram')
   , util    = require('util')
-  , net    = require('net-chromeify')
+  , net    = require('chrome-net')
   , config = require('./lib/config')
   , helpers = require('./lib/helpers')
   , fs     = require('fs')

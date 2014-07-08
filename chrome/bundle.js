@@ -294,7 +294,7 @@ exports.init = function(startupTime, config, events, logger) {
   return true;
 };
 
-},{"util":39}],"54vTgN":[function(require,module,exports){
+},{"util":42}],"54vTgN":[function(require,module,exports){
 /*jshint node:true, laxcomma:true */
 
 var util = require('util');
@@ -350,10 +350,8 @@ exports.init = function(startupTime, config, events, logger) {
   return true;
 };
 
-},{"util":39}],"./backends/console.js":[function(require,module,exports){
+},{"util":42}],"./backends/console.js":[function(require,module,exports){
 module.exports=require('54vTgN');
-},{}],"./backends/graphite.js":[function(require,module,exports){
-module.exports=require('8gIcJN');
 },{}],"8gIcJN":[function(require,module,exports){
 /*jshint node:true, laxcomma:true */
 
@@ -371,7 +369,7 @@ module.exports=require('8gIcJN');
  *   graphitePort: Port to contact graphite server at.
  */
 
-var net = require('net-chromeify');
+var net = require('chrome-net');
 
 var debug;
 var l;
@@ -606,7 +604,9 @@ exports.init = function graphite_init(startup_time, config, events, logger) {
   return true;
 };
 
-},{"net-chromeify":15}],7:[function(require,module,exports){
+},{"chrome-net":15}],"./backends/graphite.js":[function(require,module,exports){
+module.exports=require('8gIcJN');
+},{}],7:[function(require,module,exports){
 /*jshint node:true, laxcomma:true */
 
 var fs  = require('fs')
@@ -669,7 +669,7 @@ exports.configFile = function(file, callbackFunc) {
   callbackFunc(config.config, config.oldConfig);
 };
 
-},{"fs":17,"util":39}],8:[function(require,module,exports){
+},{"fs":20,"util":42}],8:[function(require,module,exports){
 /**
  * Public: test function to filter out malformed packets
  *
@@ -759,7 +759,7 @@ Logger.prototype = {
 
 exports.Logger = Logger;
 
-},{"util":39}],10:[function(require,module,exports){
+},{"util":42}],10:[function(require,module,exports){
 /*jshint node:true, laxcomma:true */
 
 /**
@@ -1014,7 +1014,7 @@ exports.set_title = function(config) {
 }
 
 }).call(this,require("UPikzY"))
-},{"UPikzY":23,"util":39}],13:[function(require,module,exports){
+},{"UPikzY":26,"util":42}],13:[function(require,module,exports){
 /*jshint node:true, laxcomma:true */
 
 var Set = function() {
@@ -1442,338 +1442,1387 @@ Socket.prototype.ref = function () {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":18,"events":21,"util":39}],15:[function(require,module,exports){
-/*
-   Copyright 2012 Google Inc
+},{"buffer":21,"events":24,"util":42}],15:[function(require,module,exports){
+(function (process,Buffer){
+/**
+ * net
+ * ===
+ *
+ * The net module provides you with an asynchronous network wrapper. It
+ * contains methods for creating both servers and clients (called streams).
+ * You can include this module with require('chrome-net')
+ */
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
+var EventEmitter = require('events').EventEmitter
+var inherits = require('inherits')
+var ipaddr = require('ipaddr.js')
+var is = require('core-util-is')
+var stream = require('stream')
 
-       http://www.apache.org/licenses/LICENSE-2.0
+// Track open servers and sockets to route incoming sockets (via onAccept and onReceive)
+// to the right handlers.
+var servers = {}
+var sockets = {}
 
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
-var net = module.exports;
-var events = require('events');
-var util = require('util');
-var Stream = require('stream');
-var Buffer = require('buffer').Buffer;
-var socketAPI = chrome.socket || chrome.experimental.socket;
-
-var stringToArrayBuffer = function(str) {
-  var buffer = new ArrayBuffer(str.length);
-  var uint8Array = new Uint8Array(buffer);
-  for(var i = 0; i < str.length; i++) {
-    uint8Array[i] = str.charCodeAt(i);
-  }
-  return buffer;
-};
-
-var bufferToArrayBuffer = function(buffer) {
-  var ab = new ArrayBuffer(buffer.length);
-  var uint8Array = new Uint8Array(ab);
-  for(var i = 0; i < ab.length; i++) {
-    uint8Array[i] = buffer.readUInt8(i);
-  }
-
-  return ab; 
-};
-
-var arrayBufferToBuffer = function(arrayBuffer) {
-  var buffer = new Buffer(arrayBuffer.byteLength);
-  var uint8Array = new Uint8Array(arrayBuffer);
-  for(var i = 0; i < uint8Array.length; i++) {
-    buffer.writeUInt8(uint8Array[i], i);
-  }
-  return buffer;
-};
-
-net.createServer = function() {
-  var options = {
-  };
-  var args = arguments;
-
-  var cb = args[args.length -1];
-  cb = (typeof cb === 'function') ? cb : function() {};
-
-  if(typeof args[0] === 'object') {
-    options = args[0];
-  }
- 
-  var server = new net.Server(options);
-  server.on("connection", cb);
-  return server;
-};
-
-net.connect = net.createConnection = function() { 
-  var options = {};
-  var args = arguments;
-  if(typeof args[0] === 'object') {
-    options.port = args[0].port;
-    options.host = args[0].host || "127.0.0.1";
-  }
-  else if(typeof args[0] === 'number') {
-    // there is a port
-    options.port = args[0];
-    if(typeof args[1] === 'string') {
-      options.host = args[1];
-    }
-  }
-  else if(typeof args[0] === 'string') {
-      console.log("<!> NET ERROR");
-    return; // can't do this.
-  }
-
-  var cb = args[args.length -1];
-  cb = (typeof cb === 'function') ? cb : function() {};
-  
-  var socket = new net.Socket(options);
-  socket.on("_created", function() { 
-    socket.connect(options, cb);
-  });
-  
-  return socket;
-};
-
-net.Server = function() {
-  var _maxConnections = 0;
-  this.__defineGetter__("maxConnections", function() { return _maxConnections; });
-  
-  var _connections = 0;
-  this.__defineGetter__("connections", function() { return _connections; });
-
-  events.EventEmitter.call(this);
-};
-
-util.inherits(net.Server, events.EventEmitter);
-
-net.Server.prototype.listen = function() {
-  var self = this;
-  var options = {};
-  var args = arguments;
-  
-  if (typeof args[0] === 'number') {
-    // assume port. and host.
-    options.port = args[0];
-    options.host = "127.0.0.1";
-    options.backlog = 511;
-    if(typeof args[1] === 'string') {
-      options.host = args[1];
-    }
-    else if(typeof args[1] === 'number') {
-      options.backlog = args[1];
-    }
-    
-    if(typeof args[2] === 'number') {
-      options.backlog = args[2];
-    }
-  }
-  else {
-    // throw.
-      console.log("<!> NET ERROR");
-  }
-
-  this._serverSocket = new net.Socket(options);
-  
-  var cb = args[args.length -1];
-  cb = (typeof cb === 'function') ? cb : function() {};
-  
-  self.on('listening', cb);
-
-  self._serverSocket.on("_created", function() {
-    // Socket created, now turn it into a server socket.
-    socketAPI.listen(self._serverSocket._socketInfo.socketId, options.host, options.port, options.backlog, function() {
-      self.emit('listening');
-      socketAPI.accept(self._serverSocket._socketInfo.socketId, self._accept.bind(self))
-    }); 
-  });
-};
-
-net.Server.prototype._accept = function(acceptInfo) {
-  // Create a new socket for the handle the response.
-  var self = this;
-  var socket = new net.Socket();
-  
-  socket._socketInfo = acceptInfo;
-  self.emit("connection", socket);
-  socketAPI.accept(self._serverSocket._socketInfo.socketId, self._accept.bind(self))
-};
-
-net.Server.prototype.close = function(callback) {
-  self.on("close", callback || function() {});
-  self._serverSocket.destroy();
-  self.emit("close");
-};
-net.Server.prototype.address = function() {};
-
-net.Socket = function(options) {
-  var self = this;
-  options = options || {};
-  this._fd = options.fd;
-  this._type = options.type || "tcp";
-  //assert(this._type === "tcp6", "Only tcp4 is allowed");
-  //assert(this._type === "unix", "Only tcp4 is allowed");
-  this._type = allowHalfOpen = options.allowHalfOpen || false;
-  this._socketInfo = 0;
-  this._encoding;
-  
-  socketAPI.create("tcp", {}, function(createInfo) {
-    self._socketInfo = createInfo;
-    self.emit("_created"); // This event doesn't exist in the API, it is here because Chrome is async 
-    // start trying to read
-    self._read();
-  });
-};
-
-util.inherits(net.Socket, Stream);
-
-/*
-  Events:
-    close
-    connect
-    data
-    drain
-    end
-    error
-    timeout
-*/
-
-/*
-  Methods
-*/
-
-net.Socket.prototype.connect = function() {
-  var self = this;
-  var options = {};
-  var args = arguments;
-  
-  if(typeof args[0] === 'object') {
-    // we have an options object.
-    options.port = args[0].port;
-    options.host = args[0].host || "127.0.0.1";
-  } 
-  else if (typeof args[0] === 'string') {
-    // throw an error, we can't do named pipes.
-      console.log("<!> NET ERROR");
-  }
-  else if (typeof args[0] === 'number') {
-    // assume port. and host.
-    options.port = args[0];
-    options.host = "127.0.0.1";
-    if(typeof args[1] === 'string') {
-      options.host = args[1];
-    }
-  }
-
-  var cb = args[args.length -1];
-  cb = (typeof cb === 'function') ? cb : function() {};
-  self.on('connect', cb);
-  
-  socketAPI.connect(self._socketInfo.socketId, options.host, options.port, function(result) {
-    if(result == 0) {
-      self.emit('connect');
-    } 
-    else {
-      self.emit('error', new Error("Unable to connect"));
-    }
-  });
-};
-
-net.Socket.prototype.destroy = function() {
-  socketAPI.disconnect(this._socketInfo.socketId);
-  socketAPI.destroy(this._socketInfo.socketId);
-};
-net.Socket.prototype.destroySoon = function() {};
-net.Socket.prototype.setEncoding = function(encoding) {
-  this._encoding = encoding;
-};
-
-net.Socket.prototype.setNoDelay = function(noDelay) {
-  noDelay = (noDelay === undefined) ? true : noDelay;
-  socketAPI.setNoDely(self._socketInfo.socketId, noDelay, function() {});
-};
-
-net.Socket.prototype.setKeepAlive = function(enable, delay) {
-  enable = (enable === 'undefined') ? false : enable;
-  delay = (delay === 'undefined') ? 0 : delay;
-  socketAPI.setKeepAlive(self._socketInfo.socketId, enable, initialDelay, function() {});
-};
-
-net.Socket.prototype._read = function() {
-  var self = this;
-  socketAPI.read(self._socketInfo.socketId, function(readInfo) {
-    if(readInfo.resultCode < 0) return; 
-    // ArrayBuffer to Buffer if no encoding.
-    var buffer = arrayBufferToBuffer(readInfo.data);
-    self.emit('data', buffer);
-  });
-
-  // enque another read soon. TODO: Is there are better way to controll speed.
-  self._readTimer = setTimeout(self._read.bind(self), 100);
+if (typeof chrome !== 'undefined') {
+  chrome.sockets.tcpServer.onAccept.addListener(onAccept)
+  chrome.sockets.tcpServer.onAcceptError.addListener(onAcceptError)
+  chrome.sockets.tcp.onReceive.addListener(onReceive)
+  chrome.sockets.tcp.onReceiveError.addListener(onReceiveError)
 }
 
-net.Socket.prototype.write = function(data, encoding, callback) {
-  var buffer;
-  var self = this;
-  
-  encoding = encoding || "UTF8";
-  callback = callback || function() {};
-
-  if(typeof data === 'string') {
-    buffer = stringToArrayBuffer(data);
+function onAccept (info) {
+  if (info.socketId in servers) {
+    servers[info.socketId]._onAccept(info.clientSocketId)
+  } else {
+    console.error('Unknown server socket id: ' + info.socketId)
   }
-  else if(data instanceof Buffer) {
-    buffer = bufferToArrayBuffer(data);
+}
+
+function onAcceptError (info) {
+  if (info.socketId in servers) {
+    servers[info.socketId]._onAcceptError(info.resultCode)
+  } else {
+    console.error('Unknown server socket id: ' + info.socketId)
   }
-  else {
-    // throw an error because we can't do anything.
-      console.log("<!> NET ERROR");
+}
+
+function onReceive (info) {
+  if (info.socketId in sockets) {
+    sockets[info.socketId]._onReceive(info.data)
+  } else {
+    console.error('Unknown socket id: ' + info.socketId)
+  }
+}
+
+function onReceiveError (info) {
+  if (info.socketId in sockets) {
+    sockets[info.socketId]._onReceiveError(info.resultCode)
+  } else {
+    console.error('Unknown socket id: ' + info.socketId)
+  }
+}
+
+/**
+ * Creates a new TCP server. The connectionListener argument is automatically
+ * set as a listener for the 'connection' event.
+ *
+ * @param  {Object} options
+ * @param  {function} listener
+ * @return {Server}
+ */
+exports.createServer = function (options, listener) {
+  return new Server(arguments[0], arguments[1])
+}
+
+/**
+ * net.connect(options, [connectionListener])
+ * net.createConnection(options, [connectionListener])
+ *
+ * Constructs a new socket object and opens the socket to the given location.
+ * When the socket is established, the 'connect' event will be emitted.
+ *
+ * For TCP sockets, options argument should be an object which specifies:
+ *
+ *   port: Port the client should connect to (Required).
+ *   host: Host the client should connect to. Defaults to 'localhost'.
+ *   localAddress: Local interface to bind to for network connections.
+ *
+ * ===============================================================
+ *
+ * net.connect(port, [host], [connectListener])
+ * net.createConnection(port, [host], [connectListener])
+ *
+ * Creates a TCP connection to port on host. If host is omitted,
+ * 'localhost' will be assumed. The connectListener parameter will be
+ * added as an listener for the 'connect' event.
+ *
+ * @param {Object} options
+ * @param {function} listener
+ * @return {Socket}
+ */
+exports.connect = exports.createConnection = function () {
+  var args = normalizeConnectArgs(arguments)
+  var s = new Socket(args[0])
+  return Socket.prototype.connect.apply(s, args)
+}
+
+inherits(Server, EventEmitter)
+
+/**
+ * Class: net.Server
+ * =================
+ *
+ * This class is used to create a TCP server.
+ *
+ * Event: 'listening'
+ *   Emitted when the server has been bound after calling server.listen.
+ *
+ * Event: 'connection'
+ *   - Socket object The connection object
+ *   Emitted when a new connection is made. socket is an instance of net.Socket.
+ *
+ * Event: 'close'
+ *   Emitted when the server closes. Note that if connections exist, this event
+ *   is not emitted until all connections are ended.
+ *
+ * Event: 'error'
+ *   - Error Object
+ *   Emitted when an error occurs. The 'close' event will be called directly
+ *   following this event. See example in discussion of server.listen.
+ */
+function Server (/* [options], listener */) {
+  var self = this
+  if (!(self instanceof Server)) return new Server(arguments[0], arguments[1])
+  EventEmitter.call(self)
+
+  var options
+
+  if (is.isFunction(arguments[0])) {
+    options = {}
+    self.on('connection', arguments[0])
+  } else {
+    options = arguments[0] || {}
+
+    if (is.isFunction(arguments[1])) {
+      self.on('connection', arguments[1])
+    }
   }
 
-  self._resetTimeout();
+  self._destroyed = false
+  self._connections = 0
+}
+exports.Server = Server
 
-  socketAPI.write(self._socketInfo.socketId, buffer, function(writeInfo) {
-    callback(); 
-  });
+/**
+ * server.listen(port, [host], [backlog], [callback])
+ *
+ * Begin accepting connections on the specified port and host. If the host is
+ * omitted, the server will accept connections directed to any IPv4 address
+ * (INADDR_ANY). A port value of zero will assign a random port.
+ *
+ * Backlog is the maximum length of the queue of pending connections. The
+ * actual length will be determined by your OS through sysctl settings such as
+ * tcp_max_syn_backlog and somaxconn on linux. The default value of this
+ * parameter is 511 (not 512).
+ *
+ * This function is asynchronous. When the server has been bound, 'listening'
+ * event will be emitted. The last parameter callback will be added as an
+ * listener for the 'listening' event.
+ *
+ * @return {Socket}
+ */
+Server.prototype.listen = function (/* variable arguments... */) {
+  var self = this
 
-  return true;
-};
+  var lastArg = arguments[arguments.length - 1]
+  if (is.isFunction(lastArg)) {
+    self.once('listening', lastArg)
+  }
 
-net.Socket.prototype._resetTimeout = function() {
-  var self = this;
-  if(!!self._timeout == false) clearTimeout(self._timeout);
-  if(!!self._timeoutValue) self._timeout = setTimeout(function() { self.emit('timeout') }, self._timeoutValue);
-};
+  // If port is invalid or undefined, bind to a random port.
+  var port = toNumber(arguments[0]) || 0
 
-net.Socket.prototype.setTimeout = function(timeout, callback) {
-  this._timeoutValue = timeout;
-  this._resetTimeout();
-};
+  var address
+  if (arguments[1] == null ||
+      is.isFunction(arguments[1]) ||
+      is.isNumber(arguments[1])) {
+    // The first argument is the port, no IP given.
+    address = '0.0.0.0'
+  } else {
+    address = arguments[1]
+  }
 
-net.Socket.prototype.ref = function() {};
-net.Socket.prototype.unref = function() {};
-net.Socket.prototype.pause = function() {};
-net.Socket.prototype.resume = function() {};
-net.Socket.prototype.end = function() {
+  // The third optional argument is the backlog size.
+  // When the ip is omitted it can be the second argument.
+  var backlog = toNumber(arguments[1]) || toNumber(arguments[2]) || undefined
 
-};
+  chrome.sockets.tcpServer.create(function (createInfo) {
+    self.id = createInfo.socketId
+
+    chrome.sockets.tcpServer.listen(self.id, address, port, backlog, function (result) {
+      if (result < 0) {
+        self.emit('error', new Error('Socket ' + self.id + ' failed to listen. ' +
+          chrome.runtime.lastError.message))
+        self._destroy()
+        return
+      }
+
+      self._address = address
+      self._port = port
+
+      servers[self.id] = self
+      self.emit('listening')
+    })
+  })
+
+  return self
+}
+
+Server.prototype._onAccept = function (clientSocketId) {
+  var self = this
+
+  // Set the `maxConnections` property to reject connections when the server's
+  // connection count gets high.
+  if (self.maxConnections && self._connections >= self.maxConnections) {
+    chrome.sockets.tcpServer.disconnect(clientSocketId)
+    chrome.sockets.tcpServer.close(clientSocketId)
+    console.warn('Rejected connection - hit `maxConnections` limit')
+    return
+  }
+
+  self._connections += 1
+
+  var acceptedSocket = new Socket({
+    server: self,
+    id: clientSocketId
+  })
+  acceptedSocket.on('connect', function () {
+    self.emit('connection', acceptedSocket)
+  })
+
+  chrome.sockets.tcp.setPaused(clientSocketId, false)
+}
+
+Server.prototype._onAcceptError = function (resultCode) {
+  var self = this
+  self.emit('error', new Error('Socket ' + self.id + ' failed to accept (' +
+    resultCode + ')'))
+  self._destroy()
+}
+
+/**
+ * Stops the server from accepting new connections and keeps existing
+ * connections. This function is asynchronous, the server is finally closed
+ * when all connections are ended and the server emits a 'close' event.
+ * Optionally, you can pass a callback to listen for the 'close' event.
+ * @param  {function} callback
+ */
+Server.prototype.close = function (callback) {
+  var self = this
+  self._destroy(callback)
+}
+
+Server.prototype._destroy = function (exception, cb) {
+  var self = this
+
+  if (self._destroyed)
+    return
+
+  if (cb)
+    this.once('close', cb)
+
+  this._destroyed = true
+  this._connections = 0
+  delete servers[self.id]
+
+  chrome.sockets.tcpServer.disconnect(self.id, function () {
+    chrome.sockets.tcpServer.close(self.id, function () {
+      self.emit('close')
+    })
+  })
+}
+
+/**
+ * Returns the bound address, the address family name and port of the socket
+ * as reported by the operating system. Returns an object with three
+ * properties, e.g. { port: 12346, family: 'IPv4', address: '127.0.0.1' }
+ *
+ * @return {Object} information
+ */
+Server.prototype.address = function () {
+  var self = this
+  return {
+    address: self._address,
+    port: self._port,
+    family: 'IPv4'
+  }
+}
+
+Server.prototype.unref = function () {
+  // No chrome.socket equivalent
+}
+
+Server.prototype.ref = function () {
+  // No chrome.socket equivalent
+}
+
+/**
+ * Asynchronously get the number of concurrent connections on the server.
+ * Works when sockets were sent to forks.
+ *
+ * Callback should take two arguments err and count.
+ *
+ * @param  {function} callback
+ */
+Server.prototype.getConnections = function (callback) {
+  var self = this
+  process.nextTick(function () {
+    callback(null, self._connections)
+  })
+}
 
 
-Object.defineProperty(net.Socket.prototype, 'readyState', {
-  get: function() {}
-});
+inherits(Socket, stream.Duplex)
 
-Object.defineProperty(net.Socket.prototype, 'bufferSize', {
-  get: function() {}
-});
+/**
+ * Class: net.Socket
+ * =================
+ *
+ * This object is an abstraction of a TCP or UNIX socket. net.Socket instances
+ * implement a duplex Stream interface. They can be created by the user and
+ * used as a client (with connect()) or they can be created by Node and passed
+ * to the user through the 'connection' event of a server.
+ *
+ * Construct a new socket object.
+ *
+ * options is an object with the following defaults:
+ *
+ *   { fd: null // NO CHROME EQUIVALENT
+ *     type: null
+ *     allowHalfOpen: false // NO CHROME EQUIVALENT
+ *   }
+ *
+ * `type` can only be 'tcp4' (for now).
+ *
+ * Event: 'connect'
+ *   Emitted when a socket connection is successfully established. See
+ *   connect().
+ *
+ * Event: 'data'
+ *   - Buffer object
+ *   Emitted when data is received. The argument data will be a Buffer or
+ *   String. Encoding of data is set by socket.setEncoding(). (See the Readable
+ *   Stream section for more information.)
+ *
+ *   Note that the data will be lost if there is no listener when a Socket
+ *   emits a 'data' event.
+ *
+ * Event: 'end'
+ *   Emitted when the other end of the socket sends a FIN packet.
+ *
+ *   By default (allowHalfOpen == false) the socket will destroy its file
+ *   descriptor once it has written out its pending write queue. However,
+ *   by setting allowHalfOpen == true the socket will not automatically
+ *   end() its side allowing the user to write arbitrary amounts of data,
+ *   with the caveat that the user is required to end() their side now.
+ *
+ * Event: 'timeout'
+ *   Emitted if the socket times out from inactivity. This is only to notify
+ *   that the socket has been idle. The user must manually close the connection.
+ *
+ *   See also: socket.setTimeout()
+ *
+ * Event: 'drain'
+ *   Emitted when the write buffer becomes empty. Can be used to throttle
+ *   uploads.
+ *
+ *   See also: the return values of socket.write()
+ *
+ * Event: 'error'
+ *   - Error object
+ *   Emitted when an error occurs. The 'close' event will be called directly
+ *   following this event.
+ *
+ * Event: 'close'
+ *   - had_error Boolean true if the socket had a transmission error
+ *   Emitted once the socket is fully closed. The argument had_error is a
+ *   boolean which says if the socket was closed due to a transmission error.
+ */
+function Socket (options) {
+  var self = this
+  if (!(self instanceof Socket)) return new Socket(options)
 
-},{"buffer":18,"events":21,"stream":37,"util":39}],16:[function(require,module,exports){
+  if (is.isUndefined(options))
+    options = {}
+
+  stream.Duplex.call(self, options)
+
+  self.destroyed = false
+  self.errorEmitted = false
+  self.readable = self.writable = false
+
+  // The amount of received bytes.
+  self.bytesRead = 0
+
+  self._bytesDispatched = 0
+  self._connecting = false
+
+  if (options.server) {
+    self.server = options.server
+    self.id = options.id
+
+    // For incoming sockets (from server), it's already connected.
+    self._connecting = true
+    self._onConnect()
+  }
+}
+
+/**
+ * socket.connect(port, [host], [connectListener])
+ * socket.connect(options, [connectListener])
+ *
+ * Opens the connection for a given socket. If port and host are given, then
+ * the socket will be opened as a TCP socket, if host is omitted, localhost
+ * will be assumed. If a path is given, the socket will be opened as a unix
+ * socket to that path.
+ *
+ * Normally this method is not needed, as net.createConnection opens the
+ * socket. Use this only if you are implementing a custom Socket.
+ *
+ * This function is asynchronous. When the 'connect' event is emitted the
+ * socket is established. If there is a problem connecting, the 'connect'
+ * event will not be emitted, the 'error' event will be emitted with the
+ * exception.
+ *
+ * The connectListener parameter will be added as an listener for the
+ * 'connect' event.
+ *
+ * @param  {Object} options
+ * @param  {function} [connectListener]
+ * @return {Socket}   this socket (for chaining)
+ */
+Socket.prototype.connect = function (options, cb) {
+  var self = this
+
+  if (self._connecting)
+    return
+  self._connecting = true
+
+  var port = Number(options.port)
+
+  if (is.isFunction(cb)) {
+    self.once('connect', cb)
+  }
+
+  chrome.sockets.tcp.create(function (createInfo) {
+    self.id = createInfo.socketId
+
+    chrome.sockets.tcp.connect(self.id, options.host, port, function (result) {
+      if (result < 0) {
+        self.destroy(new Error('Socket ' + self.id + ' connect error ' + result))
+        return
+      }
+
+      self._onConnect()
+    })
+  })
+
+  return self
+}
+
+Socket.prototype._onConnect = function () {
+  var self = this
+
+  sockets[self.id] = self
+  chrome.sockets.tcp.getInfo(self.id, function (result) {
+    self.remoteAddress = result.peerAddress
+    self.remotePort = result.peerPort
+    self.localAddress = result.localAddress
+    self.localPort = result.localPort
+
+    self._connecting = false
+    self.readable = self.writable = true
+
+    self.emit('connect')
+    // start the first read, or get an immediate EOF.
+    // this doesn't actually consume any bytes, because len=0
+    self.read(0)
+  })
+}
+
+/**
+ * The number of characters currently buffered to be written.
+ * @type {number}
+ */
+Object.defineProperty(Socket.prototype, 'bufferSize', {
+  get: function () {
+    var self = this
+    if (self._pendingData)
+      return self._pendingData.length
+    else
+      return 0 // Unfortunately, chrome.socket does not make this info available
+  }
+})
+
+/**
+ * Sends data on the socket. The second parameter specifies the encoding in
+ * the case of a string--it defaults to UTF8 encoding.
+ *
+ * Returns true if the entire data was flushed successfully to the kernel
+ * buffer. Returns false if all or part of the data was queued in user memory.
+ * 'drain' will be emitted when the buffer is again free.
+ *
+ * The optional callback parameter will be executed when the data is finally
+ * written out - this may not be immediately.
+ *
+ * @param  {Buffer|Arrayish|string} chunk
+ * @param  {string} [encoding]
+ * @param  {function} [callback]
+ * @return {boolean}             flushed to kernel completely?
+ */
+Socket.prototype.write = function (chunk, encoding, callback) {
+  var self = this
+  if (!Buffer.isBuffer(chunk))
+    chunk = new Buffer(chunk, encoding)
+
+  return stream.Duplex.prototype.write.call(self, chunk, encoding, callback)
+}
+
+Socket.prototype._write = function (buffer, encoding, callback) {
+  var self = this
+  if (!callback) callback = function () {}
+
+  if (!self.writable) {
+    self._pendingData = buffer
+    self._pendingEncoding = encoding
+    self.once('connect', function () {
+      self._write(buffer, encoding, callback)
+    })
+    return
+  }
+  self._pendingData = null
+  self._pendingEncoding = null
+
+  // assuming buffer is browser implementation (`buffer` package on npm)
+  chrome.sockets.tcp.send(self.id, buffer.buffer /* buffer.toArrayBuffer() is slower */,
+                          function (sendInfo) {
+    if (sendInfo.resultCode < 0) {
+      var err = new Error('Socket ' + self.id + ' write error: ' + sendInfo.resultCode)
+      callback(err)
+      self.destroy(err)
+    } else {
+      self._resetTimeout()
+      callback(null)
+    }
+  })
+
+  self._bytesDispatched += buffer.length
+}
+
+Socket.prototype._read = function (bufferSize) {
+  var self = this
+  if (self._connecting) {
+    self.once('connect', self._read.bind(self, bufferSize))
+    return
+  }
+
+  chrome.sockets.tcp.setPaused(self.id, false)
+}
+
+Socket.prototype._onReceive = function (data) {
+  var self = this
+  var buffer = new Buffer(new Uint8Array(data))
+
+  self.bytesRead += buffer.length
+  self._resetTimeout()
+
+  if (!self.push(buffer)) { // if returns false, then apply backpressure
+    chrome.sockets.tcp.setPaused(self.id, true)
+  }
+}
+
+Socket.prototype._onReceiveError = function (resultCode) {
+  var self = this
+  if (resultCode === -100) {
+    self.push(null)
+    self.destroy()
+  } else if (resultCode < 0) {
+    self.destroy(new Error('Socket ' + self.id + ' receive error ' + resultCode))
+  }
+}
+
+/**
+ * The amount of bytes sent.
+ * @return {number}
+ */
+Object.defineProperty(Socket.prototype, 'bytesWritten', {
+  get: function () {
+    var self = this
+    var bytes = self._bytesDispatched
+
+    self._writableState.toArrayBuffer().forEach(function (el) {
+      if (Buffer.isBuffer(el.chunk))
+        bytes += el.chunk.length
+      else
+        bytes += new Buffer(el.chunk, el.encoding).length
+    })
+
+    if (self._pendingData) {
+      if (Buffer.isBuffer(self._pendingData))
+        bytes += self._pendingData.length
+      else
+        bytes += Buffer.byteLength(self._pendingData, self._pendingEncoding)
+    }
+
+    return bytes
+  }
+})
+
+Socket.prototype.destroy = function (exception) {
+  var self = this
+  self._destroy(exception)
+}
+
+Socket.prototype._destroy = function (exception, cb) {
+  var self = this
+
+  function fireErrorCallbacks () {
+    if (cb) cb(exception)
+    if (exception && !self.errorEmitted) {
+      process.nextTick(function () {
+        self.emit('error', exception)
+      })
+      self.errorEmitted = true
+    }
+  }
+
+  if (self.destroyed) {
+    // already destroyed, fire error callbacks
+    fireErrorCallbacks()
+    return
+  }
+
+  if (this.server) {
+    this.server._connections -= 1
+  }
+
+  self._connecting = false
+  this.readable = this.writable = false
+  self.destroyed = true
+  delete sockets[self.id]
+
+  chrome.sockets.tcp.disconnect(self.id, function () {
+    chrome.sockets.tcp.close(self.id, function () {
+      self.emit('close', !!exception)
+      fireErrorCallbacks()
+    })
+  })
+}
+
+/**
+ * Sets the socket to timeout after timeout milliseconds of inactivity on the socket.
+ * By default net.Socket do not have a timeout. When an idle timeout is triggered the
+ * socket will receive a 'timeout' event but the connection will not be severed. The
+ * user must manually end() or destroy() the socket.
+ *
+ * If timeout is 0, then the existing idle timeout is disabled.
+ *
+ * The optional callback parameter will be added as a one time listener for the 'timeout' event.
+ *
+ * @param {number}   timeout
+ * @param {function} callback
+ */
+Socket.prototype.setTimeout = function (timeout, callback) {
+  var self = this
+  if (callback) self.once('timeout', callback)
+  self._timeoutMs = timeout
+  self._resetTimeout()
+}
+
+Socket.prototype._onTimeout = function () {
+  var self = this
+  self._timeout = null
+  self._timeoutMs = 0
+  self.emit('timeout')
+}
+
+Socket.prototype._resetTimeout = function () {
+  var self = this
+  if (self._timeout) {
+    clearTimeout(self._timeout)
+  }
+  if (self._timeoutMs) {
+    self._timeout = setTimeout(self._onTimeout, self.timeoutMs)
+  }
+}
+
+/**
+ * Disables the Nagle algorithm. By default TCP connections use the Nagle
+ * algorithm, they buffer data before sending it off. Setting true for noDelay
+ * will immediately fire off data each time socket.write() is called. noDelay
+ * defaults to true.
+ *
+ * NOTE: The Chrome version of this function is async, whereas the node
+ * version is sync. Keep this in mind.
+ *
+ * @param {boolean} [noDelay] Optional
+ * @param {function} callback CHROME-SPECIFIC: Called when the configuration
+ *                            operation is done.
+ */
+Socket.prototype.setNoDelay = function (noDelay, callback) {
+  var self = this
+  // backwards compatibility: assume true when `enable` is omitted
+  noDelay = is.isUndefined(noDelay) ? true : !!noDelay
+  if (!callback) callback = function () {}
+  chrome.sockets.tcp.setNoDelay(self.id, noDelay, callback)
+}
+
+/**
+ * Enable/disable keep-alive functionality, and optionally set the initial
+ * delay before the first keepalive probe is sent on an idle socket. enable
+ * defaults to false.
+ *
+ * Set initialDelay (in milliseconds) to set the delay between the last data
+ * packet received and the first keepalive probe. Setting 0 for initialDelay
+ * will leave the value unchanged from the default (or previous) setting.
+ * Defaults to 0.
+ *
+ * NOTE: The Chrome version of this function is async, whereas the node
+ * version is sync. Keep this in mind.
+ *
+ * @param {boolean} [enable] Optional
+ * @param {number} [initialDelay]
+ * @param {function} callback CHROME-SPECIFIC: Called when the configuration
+ *                            operation is done.
+ */
+Socket.prototype.setKeepAlive = function (enable, initialDelay, callback) {
+  var self = this
+  if (!callback) callback = function () {}
+  chrome.sockets.tcp.setKeepAlive(self.id, !!enable, ~~(initialDelay / 1000),
+      callback)
+}
+
+/**
+ * Returns the bound address, the address family name and port of the socket
+ * as reported by the operating system. Returns an object with three
+ * properties, e.g. { port: 12346, family: 'IPv4', address: '127.0.0.1' }
+ *
+ * @return {Object} information
+ */
+Socket.prototype.address = function () {
+  var self = this
+  return {
+    address: self.localAddress,
+    port: self.localPort,
+    family: 'IPv4'
+  }
+}
+
+Object.defineProperty(Socket.prototype, 'readyState', {
+  get: function () {
+    var self = this
+    if (self._connecting) {
+      return 'opening'
+    } else if (self.readable && self.writable) {
+      return 'open'
+    } else {
+      return 'closed'
+    }
+  }
+})
+
+Socket.prototype.unref = function () {
+  // No chrome.socket equivalent
+}
+
+Socket.prototype.ref = function () {
+  // No chrome.socket equivalent
+}
+
+//
+// EXPORTED HELPERS
+//
+
+exports.isIP = function (input) {
+  try {
+    ipaddr.parse(input)
+  } catch (e) {
+    return false
+  }
+  return true
+}
+
+exports.isIPv4 = function (input) {
+  try {
+    var parsed = ipaddr.parse(input)
+    return (parsed.kind() === 'ipv4')
+  } catch (e) {
+    return false
+  }
+}
+
+exports.isIPv6 = function (input) {
+  try {
+    var parsed = ipaddr.parse(input)
+    return (parsed.kind() === 'ipv6')
+  } catch (e) {
+    return false
+  }
+}
+
+//
+// HELPERS
+//
+
+/**
+ * Returns an array [options] or [options, cb]
+ * It is the same as the argument of Socket.prototype.connect().
+ */
+function normalizeConnectArgs (args) {
+  var options = {}
+
+  if (is.isObject(args[0])) {
+    // connect(options, [cb])
+    options = args[0]
+  } else {
+    // connect(port, [host], [cb])
+    options.port = args[0]
+    if (is.isString(args[1])) {
+      options.host = args[1]
+    } else {
+      options.host = '127.0.0.1'
+    }
+  }
+
+  var cb = args[args.length - 1]
+  return is.isFunction(cb) ? [options, cb] : [options]
+}
+
+function toNumber (x) {
+  return (x = Number(x)) >= 0 ? x : false
+}
+
+}).call(this,require("UPikzY"),require("buffer").Buffer)
+},{"UPikzY":26,"buffer":21,"core-util-is":16,"events":24,"inherits":17,"ipaddr.js":18,"stream":40}],16:[function(require,module,exports){
+(function (Buffer){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+// NOTE: These type checking functions intentionally don't use `instanceof`
+// because it is fragile and can be easily faked with `Object.create()`.
+function isArray(ar) {
+  return Array.isArray(ar);
+}
+exports.isArray = isArray;
+
+function isBoolean(arg) {
+  return typeof arg === 'boolean';
+}
+exports.isBoolean = isBoolean;
+
+function isNull(arg) {
+  return arg === null;
+}
+exports.isNull = isNull;
+
+function isNullOrUndefined(arg) {
+  return arg == null;
+}
+exports.isNullOrUndefined = isNullOrUndefined;
+
+function isNumber(arg) {
+  return typeof arg === 'number';
+}
+exports.isNumber = isNumber;
+
+function isString(arg) {
+  return typeof arg === 'string';
+}
+exports.isString = isString;
+
+function isSymbol(arg) {
+  return typeof arg === 'symbol';
+}
+exports.isSymbol = isSymbol;
+
+function isUndefined(arg) {
+  return arg === void 0;
+}
+exports.isUndefined = isUndefined;
+
+function isRegExp(re) {
+  return isObject(re) && objectToString(re) === '[object RegExp]';
+}
+exports.isRegExp = isRegExp;
+
+function isObject(arg) {
+  return typeof arg === 'object' && arg !== null;
+}
+exports.isObject = isObject;
+
+function isDate(d) {
+  return isObject(d) && objectToString(d) === '[object Date]';
+}
+exports.isDate = isDate;
+
+function isError(e) {
+  return isObject(e) &&
+      (objectToString(e) === '[object Error]' || e instanceof Error);
+}
+exports.isError = isError;
+
+function isFunction(arg) {
+  return typeof arg === 'function';
+}
+exports.isFunction = isFunction;
+
+function isPrimitive(arg) {
+  return arg === null ||
+         typeof arg === 'boolean' ||
+         typeof arg === 'number' ||
+         typeof arg === 'string' ||
+         typeof arg === 'symbol' ||  // ES6 symbol
+         typeof arg === 'undefined';
+}
+exports.isPrimitive = isPrimitive;
+
+function isBuffer(arg) {
+  return Buffer.isBuffer(arg);
+}
+exports.isBuffer = isBuffer;
+
+function objectToString(o) {
+  return Object.prototype.toString.call(o);
+}
+}).call(this,require("buffer").Buffer)
+},{"buffer":21}],17:[function(require,module,exports){
+if (typeof Object.create === 'function') {
+  // implementation from standard node.js 'util' module
+  module.exports = function inherits(ctor, superCtor) {
+    ctor.super_ = superCtor
+    ctor.prototype = Object.create(superCtor.prototype, {
+      constructor: {
+        value: ctor,
+        enumerable: false,
+        writable: true,
+        configurable: true
+      }
+    });
+  };
+} else {
+  // old school shim for old browsers
+  module.exports = function inherits(ctor, superCtor) {
+    ctor.super_ = superCtor
+    var TempCtor = function () {}
+    TempCtor.prototype = superCtor.prototype
+    ctor.prototype = new TempCtor()
+    ctor.prototype.constructor = ctor
+  }
+}
+
+},{}],18:[function(require,module,exports){
+(function() {
+  var expandIPv6, ipaddr, ipv4Part, ipv4Regexes, ipv6Part, ipv6Regexes, matchCIDR, root;
+
+  ipaddr = {};
+
+  root = this;
+
+  if ((typeof module !== "undefined" && module !== null) && module.exports) {
+    module.exports = ipaddr;
+  } else {
+    root['ipaddr'] = ipaddr;
+  }
+
+  matchCIDR = function(first, second, partSize, cidrBits) {
+    var part, shift;
+    if (first.length !== second.length) {
+      throw new Error("ipaddr: cannot match CIDR for objects with different lengths");
+    }
+    part = 0;
+    while (cidrBits > 0) {
+      shift = partSize - cidrBits;
+      if (shift < 0) {
+        shift = 0;
+      }
+      if (first[part] >> shift !== second[part] >> shift) {
+        return false;
+      }
+      cidrBits -= partSize;
+      part += 1;
+    }
+    return true;
+  };
+
+  ipaddr.subnetMatch = function(address, rangeList, defaultName) {
+    var rangeName, rangeSubnets, subnet, _i, _len;
+    if (defaultName == null) {
+      defaultName = 'unicast';
+    }
+    for (rangeName in rangeList) {
+      rangeSubnets = rangeList[rangeName];
+      if (toString.call(rangeSubnets[0]) !== '[object Array]') {
+        rangeSubnets = [rangeSubnets];
+      }
+      for (_i = 0, _len = rangeSubnets.length; _i < _len; _i++) {
+        subnet = rangeSubnets[_i];
+        if (address.match.apply(address, subnet)) {
+          return rangeName;
+        }
+      }
+    }
+    return defaultName;
+  };
+
+  ipaddr.IPv4 = (function() {
+    function IPv4(octets) {
+      var octet, _i, _len;
+      if (octets.length !== 4) {
+        throw new Error("ipaddr: ipv4 octet count should be 4");
+      }
+      for (_i = 0, _len = octets.length; _i < _len; _i++) {
+        octet = octets[_i];
+        if (!((0 <= octet && octet <= 255))) {
+          throw new Error("ipaddr: ipv4 octet is a byte");
+        }
+      }
+      this.octets = octets;
+    }
+
+    IPv4.prototype.kind = function() {
+      return 'ipv4';
+    };
+
+    IPv4.prototype.toString = function() {
+      return this.octets.join(".");
+    };
+
+    IPv4.prototype.toByteArray = function() {
+      return this.octets.slice(0);
+    };
+
+    IPv4.prototype.match = function(other, cidrRange) {
+      if (other.kind() !== 'ipv4') {
+        throw new Error("ipaddr: cannot match ipv4 address with non-ipv4 one");
+      }
+      return matchCIDR(this.octets, other.octets, 8, cidrRange);
+    };
+
+    IPv4.prototype.SpecialRanges = {
+      broadcast: [[new IPv4([255, 255, 255, 255]), 32]],
+      multicast: [[new IPv4([224, 0, 0, 0]), 4]],
+      linkLocal: [[new IPv4([169, 254, 0, 0]), 16]],
+      loopback: [[new IPv4([127, 0, 0, 0]), 8]],
+      "private": [[new IPv4([10, 0, 0, 0]), 8], [new IPv4([172, 16, 0, 0]), 12], [new IPv4([192, 168, 0, 0]), 16]],
+      reserved: [[new IPv4([192, 0, 0, 0]), 24], [new IPv4([192, 0, 2, 0]), 24], [new IPv4([192, 88, 99, 0]), 24], [new IPv4([198, 51, 100, 0]), 24], [new IPv4([203, 0, 113, 0]), 24], [new IPv4([240, 0, 0, 0]), 4]]
+    };
+
+    IPv4.prototype.range = function() {
+      return ipaddr.subnetMatch(this, this.SpecialRanges);
+    };
+
+    IPv4.prototype.toIPv4MappedAddress = function() {
+      return ipaddr.IPv6.parse("::ffff:" + (this.toString()));
+    };
+
+    return IPv4;
+
+  })();
+
+  ipv4Part = "(0?\\d+|0x[a-f0-9]+)";
+
+  ipv4Regexes = {
+    fourOctet: new RegExp("^" + ipv4Part + "\\." + ipv4Part + "\\." + ipv4Part + "\\." + ipv4Part + "$", 'i'),
+    longValue: new RegExp("^" + ipv4Part + "$", 'i')
+  };
+
+  ipaddr.IPv4.parser = function(string) {
+    var match, parseIntAuto, part, shift, value;
+    parseIntAuto = function(string) {
+      if (string[0] === "0" && string[1] !== "x") {
+        return parseInt(string, 8);
+      } else {
+        return parseInt(string);
+      }
+    };
+    if (match = string.match(ipv4Regexes.fourOctet)) {
+      return (function() {
+        var _i, _len, _ref, _results;
+        _ref = match.slice(1, 6);
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          part = _ref[_i];
+          _results.push(parseIntAuto(part));
+        }
+        return _results;
+      })();
+    } else if (match = string.match(ipv4Regexes.longValue)) {
+      value = parseIntAuto(match[1]);
+      return ((function() {
+        var _i, _results;
+        _results = [];
+        for (shift = _i = 0; _i <= 24; shift = _i += 8) {
+          _results.push((value >> shift) & 0xff);
+        }
+        return _results;
+      })()).reverse();
+    } else {
+      return null;
+    }
+  };
+
+  ipaddr.IPv6 = (function() {
+    function IPv6(parts) {
+      var part, _i, _len;
+      if (parts.length !== 8) {
+        throw new Error("ipaddr: ipv6 part count should be 8");
+      }
+      for (_i = 0, _len = parts.length; _i < _len; _i++) {
+        part = parts[_i];
+        if (!((0 <= part && part <= 0xffff))) {
+          throw new Error("ipaddr: ipv6 part should fit to two octets");
+        }
+      }
+      this.parts = parts;
+    }
+
+    IPv6.prototype.kind = function() {
+      return 'ipv6';
+    };
+
+    IPv6.prototype.toString = function() {
+      var compactStringParts, part, pushPart, state, stringParts, _i, _len;
+      stringParts = (function() {
+        var _i, _len, _ref, _results;
+        _ref = this.parts;
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          part = _ref[_i];
+          _results.push(part.toString(16));
+        }
+        return _results;
+      }).call(this);
+      compactStringParts = [];
+      pushPart = function(part) {
+        return compactStringParts.push(part);
+      };
+      state = 0;
+      for (_i = 0, _len = stringParts.length; _i < _len; _i++) {
+        part = stringParts[_i];
+        switch (state) {
+          case 0:
+            if (part === '0') {
+              pushPart('');
+            } else {
+              pushPart(part);
+            }
+            state = 1;
+            break;
+          case 1:
+            if (part === '0') {
+              state = 2;
+            } else {
+              pushPart(part);
+            }
+            break;
+          case 2:
+            if (part !== '0') {
+              pushPart('');
+              pushPart(part);
+              state = 3;
+            }
+            break;
+          case 3:
+            pushPart(part);
+        }
+      }
+      if (state === 2) {
+        pushPart('');
+        pushPart('');
+      }
+      return compactStringParts.join(":");
+    };
+
+    IPv6.prototype.toByteArray = function() {
+      var bytes, part, _i, _len, _ref;
+      bytes = [];
+      _ref = this.parts;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        part = _ref[_i];
+        bytes.push(part >> 8);
+        bytes.push(part & 0xff);
+      }
+      return bytes;
+    };
+
+    IPv6.prototype.toNormalizedString = function() {
+      var part;
+      return ((function() {
+        var _i, _len, _ref, _results;
+        _ref = this.parts;
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          part = _ref[_i];
+          _results.push(part.toString(16));
+        }
+        return _results;
+      }).call(this)).join(":");
+    };
+
+    IPv6.prototype.match = function(other, cidrRange) {
+      if (other.kind() !== 'ipv6') {
+        throw new Error("ipaddr: cannot match ipv6 address with non-ipv6 one");
+      }
+      return matchCIDR(this.parts, other.parts, 16, cidrRange);
+    };
+
+    IPv6.prototype.SpecialRanges = {
+      unspecified: [new IPv6([0, 0, 0, 0, 0, 0, 0, 0]), 128],
+      linkLocal: [new IPv6([0xfe80, 0, 0, 0, 0, 0, 0, 0]), 10],
+      multicast: [new IPv6([0xff00, 0, 0, 0, 0, 0, 0, 0]), 8],
+      loopback: [new IPv6([0, 0, 0, 0, 0, 0, 0, 1]), 128],
+      uniqueLocal: [new IPv6([0xfc00, 0, 0, 0, 0, 0, 0, 0]), 7],
+      ipv4Mapped: [new IPv6([0, 0, 0, 0, 0, 0xffff, 0, 0]), 96],
+      rfc6145: [new IPv6([0, 0, 0, 0, 0xffff, 0, 0, 0]), 96],
+      rfc6052: [new IPv6([0x64, 0xff9b, 0, 0, 0, 0, 0, 0]), 96],
+      '6to4': [new IPv6([0x2002, 0, 0, 0, 0, 0, 0, 0]), 16],
+      teredo: [new IPv6([0x2001, 0, 0, 0, 0, 0, 0, 0]), 32],
+      reserved: [[new IPv6([0x2001, 0xdb8, 0, 0, 0, 0, 0, 0]), 32]]
+    };
+
+    IPv6.prototype.range = function() {
+      return ipaddr.subnetMatch(this, this.SpecialRanges);
+    };
+
+    IPv6.prototype.isIPv4MappedAddress = function() {
+      return this.range() === 'ipv4Mapped';
+    };
+
+    IPv6.prototype.toIPv4Address = function() {
+      var high, low, _ref;
+      if (!this.isIPv4MappedAddress()) {
+        throw new Error("ipaddr: trying to convert a generic ipv6 address to ipv4");
+      }
+      _ref = this.parts.slice(-2), high = _ref[0], low = _ref[1];
+      return new ipaddr.IPv4([high >> 8, high & 0xff, low >> 8, low & 0xff]);
+    };
+
+    return IPv6;
+
+  })();
+
+  ipv6Part = "(?:[0-9a-f]+::?)+";
+
+  ipv6Regexes = {
+    "native": new RegExp("^(::)?(" + ipv6Part + ")?([0-9a-f]+)?(::)?$", 'i'),
+    transitional: new RegExp(("^((?:" + ipv6Part + ")|(?:::)(?:" + ipv6Part + ")?)") + ("" + ipv4Part + "\\." + ipv4Part + "\\." + ipv4Part + "\\." + ipv4Part + "$"), 'i')
+  };
+
+  expandIPv6 = function(string, parts) {
+    var colonCount, lastColon, part, replacement, replacementCount;
+    if (string.indexOf('::') !== string.lastIndexOf('::')) {
+      return null;
+    }
+    colonCount = 0;
+    lastColon = -1;
+    while ((lastColon = string.indexOf(':', lastColon + 1)) >= 0) {
+      colonCount++;
+    }
+    if (string[0] === ':') {
+      colonCount--;
+    }
+    if (string[string.length - 1] === ':') {
+      colonCount--;
+    }
+    replacementCount = parts - colonCount;
+    replacement = ':';
+    while (replacementCount--) {
+      replacement += '0:';
+    }
+    string = string.replace('::', replacement);
+    if (string[0] === ':') {
+      string = string.slice(1);
+    }
+    if (string[string.length - 1] === ':') {
+      string = string.slice(0, -1);
+    }
+    return (function() {
+      var _i, _len, _ref, _results;
+      _ref = string.split(":");
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        part = _ref[_i];
+        _results.push(parseInt(part, 16));
+      }
+      return _results;
+    })();
+  };
+
+  ipaddr.IPv6.parser = function(string) {
+    var match, parts;
+    if (string.match(ipv6Regexes['native'])) {
+      return expandIPv6(string, 8);
+    } else if (match = string.match(ipv6Regexes['transitional'])) {
+      parts = expandIPv6(match[1].slice(0, -1), 6);
+      if (parts) {
+        parts.push(parseInt(match[2]) << 8 | parseInt(match[3]));
+        parts.push(parseInt(match[4]) << 8 | parseInt(match[5]));
+        return parts;
+      }
+    }
+    return null;
+  };
+
+  ipaddr.IPv4.isIPv4 = ipaddr.IPv6.isIPv6 = function(string) {
+    return this.parser(string) !== null;
+  };
+
+  ipaddr.IPv4.isValid = ipaddr.IPv6.isValid = function(string) {
+    var e;
+    try {
+      new this(this.parser(string));
+      return true;
+    } catch (_error) {
+      e = _error;
+      return false;
+    }
+  };
+
+  ipaddr.IPv4.parse = ipaddr.IPv6.parse = function(string) {
+    var parts;
+    parts = this.parser(string);
+    if (parts === null) {
+      throw new Error("ipaddr: string is not formatted like ip address");
+    }
+    return new this(parts);
+  };
+
+  ipaddr.isValid = function(string) {
+    return ipaddr.IPv6.isValid(string) || ipaddr.IPv4.isValid(string);
+  };
+
+  ipaddr.parse = function(string) {
+    if (ipaddr.IPv6.isIPv6(string)) {
+      return ipaddr.IPv6.parse(string);
+    } else if (ipaddr.IPv4.isIPv4(string)) {
+      return ipaddr.IPv4.parse(string);
+    } else {
+      throw new Error("ipaddr: the address has neither IPv6 nor IPv4 format");
+    }
+  };
+
+  ipaddr.process = function(string) {
+    var addr;
+    addr = this.parse(string);
+    if (addr.kind() === 'ipv6' && addr.isIPv4MappedAddress()) {
+      return addr.toIPv4Address();
+    } else {
+      return addr;
+    }
+  };
+
+}).call(this);
+
+},{}],19:[function(require,module,exports){
 (function (process){
 /*jshint node:true, laxcomma:true */
 console.group("Initializing...");
@@ -1787,7 +2836,7 @@ console.group("Loading...");
                           console.log("1. Imports");
 var dgram  = require('chrome-dgram')
   , util    = require('util')
-  , net    = require('net-chromeify')
+  , net    = require('chrome-net')
   , config = require('./lib/config')
   , helpers = require('./lib/helpers')
   , fs     = require('fs')
@@ -2219,9 +3268,9 @@ console.log("Initialized.");
 console.groupEnd();
 
 }).call(this,require("UPikzY"))
-},{"./lib/config":7,"./lib/helpers":8,"./lib/logger":9,"./lib/mgmt_console":10,"./lib/process_metrics":11,"./lib/process_mgmt":12,"./lib/set":13,"UPikzY":23,"chrome-dgram":14,"events":21,"fs":17,"net-chromeify":15,"util":39}],17:[function(require,module,exports){
+},{"./lib/config":7,"./lib/helpers":8,"./lib/logger":9,"./lib/mgmt_console":10,"./lib/process_metrics":11,"./lib/process_mgmt":12,"./lib/set":13,"UPikzY":26,"chrome-dgram":14,"chrome-net":15,"events":24,"fs":20,"util":42}],20:[function(require,module,exports){
 
-},{}],18:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 /*!
  * The buffer module from node.js, for the browser.
  *
@@ -3372,7 +4421,7 @@ function assert (test, message) {
   if (!test) throw new Error(message || 'Failed assertion')
 }
 
-},{"base64-js":19,"ieee754":20}],19:[function(require,module,exports){
+},{"base64-js":22,"ieee754":23}],22:[function(require,module,exports){
 var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 ;(function (exports) {
@@ -3494,7 +4543,7 @@ var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 	exports.fromByteArray = uint8ToBase64
 }(typeof exports === 'undefined' ? (this.base64js = {}) : exports))
 
-},{}],20:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 exports.read = function(buffer, offset, isLE, mLen, nBytes) {
   var e, m,
       eLen = nBytes * 8 - mLen - 1,
@@ -3580,7 +4629,7 @@ exports.write = function(buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128;
 };
 
-},{}],21:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -3885,32 +4934,9 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],22:[function(require,module,exports){
-if (typeof Object.create === 'function') {
-  // implementation from standard node.js 'util' module
-  module.exports = function inherits(ctor, superCtor) {
-    ctor.super_ = superCtor
-    ctor.prototype = Object.create(superCtor.prototype, {
-      constructor: {
-        value: ctor,
-        enumerable: false,
-        writable: true,
-        configurable: true
-      }
-    });
-  };
-} else {
-  // old school shim for old browsers
-  module.exports = function inherits(ctor, superCtor) {
-    ctor.super_ = superCtor
-    var TempCtor = function () {}
-    TempCtor.prototype = superCtor.prototype
-    ctor.prototype = new TempCtor()
-    ctor.prototype.constructor = ctor
-  }
-}
-
-},{}],23:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
+module.exports=require(17)
+},{}],26:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -3975,10 +5001,10 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],24:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 module.exports = require("./lib/_stream_duplex.js")
 
-},{"./lib/_stream_duplex.js":25}],25:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":28}],28:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -4071,7 +5097,7 @@ function forEach (xs, f) {
 }
 
 }).call(this,require("UPikzY"))
-},{"./_stream_readable":27,"./_stream_writable":29,"UPikzY":23,"core-util-is":30,"inherits":22}],26:[function(require,module,exports){
+},{"./_stream_readable":30,"./_stream_writable":32,"UPikzY":26,"core-util-is":33,"inherits":25}],29:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -4119,7 +5145,7 @@ PassThrough.prototype._transform = function(chunk, encoding, cb) {
   cb(null, chunk);
 };
 
-},{"./_stream_transform":28,"core-util-is":30,"inherits":22}],27:[function(require,module,exports){
+},{"./_stream_transform":31,"core-util-is":33,"inherits":25}],30:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -5082,7 +6108,7 @@ function indexOf (xs, x) {
 }
 
 }).call(this,require("UPikzY"))
-},{"UPikzY":23,"buffer":18,"core-util-is":30,"events":21,"inherits":22,"isarray":31,"stream":37,"string_decoder/":32}],28:[function(require,module,exports){
+},{"UPikzY":26,"buffer":21,"core-util-is":33,"events":24,"inherits":25,"isarray":34,"stream":40,"string_decoder/":35}],31:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -5294,7 +6320,7 @@ function done(stream, er) {
   return stream.push(null);
 }
 
-},{"./_stream_duplex":25,"core-util-is":30,"inherits":22}],29:[function(require,module,exports){
+},{"./_stream_duplex":28,"core-util-is":33,"inherits":25}],32:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -5685,122 +6711,14 @@ function endWritable(stream, state, cb) {
 }
 
 }).call(this,require("UPikzY"))
-},{"./_stream_duplex":25,"UPikzY":23,"buffer":18,"core-util-is":30,"inherits":22,"stream":37}],30:[function(require,module,exports){
-(function (Buffer){
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-// NOTE: These type checking functions intentionally don't use `instanceof`
-// because it is fragile and can be easily faked with `Object.create()`.
-function isArray(ar) {
-  return Array.isArray(ar);
-}
-exports.isArray = isArray;
-
-function isBoolean(arg) {
-  return typeof arg === 'boolean';
-}
-exports.isBoolean = isBoolean;
-
-function isNull(arg) {
-  return arg === null;
-}
-exports.isNull = isNull;
-
-function isNullOrUndefined(arg) {
-  return arg == null;
-}
-exports.isNullOrUndefined = isNullOrUndefined;
-
-function isNumber(arg) {
-  return typeof arg === 'number';
-}
-exports.isNumber = isNumber;
-
-function isString(arg) {
-  return typeof arg === 'string';
-}
-exports.isString = isString;
-
-function isSymbol(arg) {
-  return typeof arg === 'symbol';
-}
-exports.isSymbol = isSymbol;
-
-function isUndefined(arg) {
-  return arg === void 0;
-}
-exports.isUndefined = isUndefined;
-
-function isRegExp(re) {
-  return isObject(re) && objectToString(re) === '[object RegExp]';
-}
-exports.isRegExp = isRegExp;
-
-function isObject(arg) {
-  return typeof arg === 'object' && arg !== null;
-}
-exports.isObject = isObject;
-
-function isDate(d) {
-  return isObject(d) && objectToString(d) === '[object Date]';
-}
-exports.isDate = isDate;
-
-function isError(e) {
-  return isObject(e) &&
-      (objectToString(e) === '[object Error]' || e instanceof Error);
-}
-exports.isError = isError;
-
-function isFunction(arg) {
-  return typeof arg === 'function';
-}
-exports.isFunction = isFunction;
-
-function isPrimitive(arg) {
-  return arg === null ||
-         typeof arg === 'boolean' ||
-         typeof arg === 'number' ||
-         typeof arg === 'string' ||
-         typeof arg === 'symbol' ||  // ES6 symbol
-         typeof arg === 'undefined';
-}
-exports.isPrimitive = isPrimitive;
-
-function isBuffer(arg) {
-  return Buffer.isBuffer(arg);
-}
-exports.isBuffer = isBuffer;
-
-function objectToString(o) {
-  return Object.prototype.toString.call(o);
-}
-}).call(this,require("buffer").Buffer)
-},{"buffer":18}],31:[function(require,module,exports){
+},{"./_stream_duplex":28,"UPikzY":26,"buffer":21,"core-util-is":33,"inherits":25,"stream":40}],33:[function(require,module,exports){
+module.exports=require(16)
+},{"buffer":21}],34:[function(require,module,exports){
 module.exports = Array.isArray || function (arr) {
   return Object.prototype.toString.call(arr) == '[object Array]';
 };
 
-},{}],32:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -6002,10 +6920,10 @@ function base64DetectIncompleteChar(buffer) {
   return incomplete;
 }
 
-},{"buffer":18}],33:[function(require,module,exports){
+},{"buffer":21}],36:[function(require,module,exports){
 module.exports = require("./lib/_stream_passthrough.js")
 
-},{"./lib/_stream_passthrough.js":26}],34:[function(require,module,exports){
+},{"./lib/_stream_passthrough.js":29}],37:[function(require,module,exports){
 exports = module.exports = require('./lib/_stream_readable.js');
 exports.Readable = exports;
 exports.Writable = require('./lib/_stream_writable.js');
@@ -6013,13 +6931,13 @@ exports.Duplex = require('./lib/_stream_duplex.js');
 exports.Transform = require('./lib/_stream_transform.js');
 exports.PassThrough = require('./lib/_stream_passthrough.js');
 
-},{"./lib/_stream_duplex.js":25,"./lib/_stream_passthrough.js":26,"./lib/_stream_readable.js":27,"./lib/_stream_transform.js":28,"./lib/_stream_writable.js":29}],35:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":28,"./lib/_stream_passthrough.js":29,"./lib/_stream_readable.js":30,"./lib/_stream_transform.js":31,"./lib/_stream_writable.js":32}],38:[function(require,module,exports){
 module.exports = require("./lib/_stream_transform.js")
 
-},{"./lib/_stream_transform.js":28}],36:[function(require,module,exports){
+},{"./lib/_stream_transform.js":31}],39:[function(require,module,exports){
 module.exports = require("./lib/_stream_writable.js")
 
-},{"./lib/_stream_writable.js":29}],37:[function(require,module,exports){
+},{"./lib/_stream_writable.js":32}],40:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -6148,14 +7066,14 @@ Stream.prototype.pipe = function(dest, options) {
   return dest;
 };
 
-},{"events":21,"inherits":22,"readable-stream/duplex.js":24,"readable-stream/passthrough.js":33,"readable-stream/readable.js":34,"readable-stream/transform.js":35,"readable-stream/writable.js":36}],38:[function(require,module,exports){
+},{"events":24,"inherits":25,"readable-stream/duplex.js":27,"readable-stream/passthrough.js":36,"readable-stream/readable.js":37,"readable-stream/transform.js":38,"readable-stream/writable.js":39}],41:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],39:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -6745,4 +7663,4 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this,require("UPikzY"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":38,"UPikzY":23,"inherits":22}]},{},[16])
+},{"./support/isBuffer":41,"UPikzY":26,"inherits":25}]},{},[19])

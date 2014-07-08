@@ -14,7 +14,7 @@
  *   graphitePort: Port to contact graphite server at.
  */
 
-var net = require('net-chromeify');
+var net = require('chrome-net');
 
 var debug;
 var l;
