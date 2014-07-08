@@ -2,9 +2,7 @@
 
 pushd /opt/graphite
 
-export DJANGO_SETTINGS_MODULE=graphite.settings
-
-python /Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/django/bin/django-admin.py syncdb
+python /Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/django/bin/django-admin.py syncdb  --settings=graphite.settings --pythonpath=webapp
 sudo python bin/carbon-cache.py start
 sudo python bin/run-graphite-devel-server.py ./
 

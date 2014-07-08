@@ -162,7 +162,7 @@ AppBackend.prototype.flush = function(timestamp, metrics) {
          mean: 746.3333333333334,
          median: 910 },
      'rippled.jobq.trustedValidation':
-     { count_90: 6,
+         { count_90: 6,
          mean_90: 274.1666666666667,
          upper_90: 407,
          sum_90: 1645,
@@ -271,8 +271,8 @@ AppBackend.prototype.flush = function(timestamp, metrics) {
     display("Timestamp: "+new Date(timestamp * 1000).toString()+" (Lag: "+out.gauges["statsd.timestamp_lag"]+")");
     if (out.counters["statsd.bad_lines_seen"] > 0) {
         display("WARNING: Bad lines seen = "+out.counters["statsd/bad_lines_seen"]);
-    }
-    else if (out.counters["statsd.packets_received"] < 1) {
+    };
+    if (out.counters["statsd.packets_received"] < 1) {
         display("Waiting...");
     }
     else {
@@ -623,8 +623,8 @@ var Configurator = function (file) {
 
       if (file == "Config.js") {
           self.config = {
-                graphitePort: 8080
-              , graphiteHost: "127.0.0.1"
+                graphitePort: 2003
+              , graphiteHost: "0.0.0.0"
               , address: "127.0.0.1"
               , port: 8125
               , backends: [ "./backends/console.js", "./backends/app.js", "./backends/graphite.js" ]
