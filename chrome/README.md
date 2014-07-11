@@ -3,7 +3,7 @@ Statsd For Chrome
 
 ### Installation:
 
-1. Download and install [https://www.google.com/intl/en/chrome/browser/][Google Chrome]
+1. Download and install [Google Chrome](https://www.google.com/intl/en/chrome/browser/)
 2. Open the drop down menu at the top right, and navigate to and select "Settings"
 3. Select "Extensions" from the left menu bar, and check "Developer mode" on the top right
 4. Select "Load unpacked extension..." and select /statsd/chrome/
@@ -19,11 +19,11 @@ Statsd For Chrome
 ### How It Does It:
 
 * While lots of code changes were necessary to make this work, this merge only includes them in source/ and bundle.js, so as not to pollute the main repo
-* Uses [https://github.com/substack/node-browserify][browserify] to handle the conversion, with [https://github.com/feross/chrome-net][chrome-net] and [https://github.com/feross/chrome-dgram][chrome-dgram] handling the wrapping of chrome's networking APIs
+* Uses [browserify](https://github.com/substack/node-browserify) to handle the conversion, with [chrome-net](https://github.com/feross/chrome-net) and [chrome-dgram](https://github.com/feross/chrome-dgram) handling the wrapping of chrome's networking APIs
 
 ### Why It Does It:
 
-* This project was done to assist [https://www.ripple.com/][Ripple Labs] in easy tracking and monitoring of data, but the code created is fully general.
+* This project was done to assist [Ripple Labs][https://www.ripple.com/] in easy tracking and monitoring of data, but the code created is fully general.
 
 ### Caveats:
 
@@ -31,4 +31,4 @@ Statsd For Chrome
 * Config editing has to be done inside bundle.js (or config.js if you are planning on re-bundling)--this is unfortunate, but no obvious workaround presented itself
 
 *For more information, including all the code that went into this, see:
-[https://github.com/evhub/statsd][]*
+<https://github.com/evhub/statsd>*
