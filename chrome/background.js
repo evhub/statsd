@@ -7,8 +7,8 @@ chrome.app.runtime.onLaunched.addListener(function() {
                                           chrome.app.window.create("display.html", {
                                                                    id: "mainwin",
                                                                    bounds: {
-                                                                        width: 800,
-                                                                        height: 480
+                                                                        width: 1000,
+                                                                        height: 600
                                                                         }
                                                                    });
                                           
