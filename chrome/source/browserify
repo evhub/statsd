@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+cd Checkout/statsd/
+browserify stats.js -r ./backends/console.js -r ./backends/app.js -r ./backends/graphite.js -o chrome/bundle.js
