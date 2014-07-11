@@ -15,6 +15,8 @@ Statsd For Chrome
 * Uses pure chrome APIs, so node.js is never needed
 * Runs in chrome, so it's still using the V8 JavaScript engine, so performance is still great
 * Makes statsd very easily portable, since all it relies on is chrome
+* The actual interface in the app is specified in app.js, it shows some basic stats and an embedded graphite window, by default
+* But the great benefit of this method is that graphite will, in the future, no longer be required, since any browser JavaScript data visualization toolkit could be built as a backend right into the app
 
 ### How It Does It:
 
@@ -23,7 +25,7 @@ Statsd For Chrome
 
 ### Why It Does It:
 
-* This project was done to assist [Ripple Labs][https://www.ripple.com/] in easy tracking and monitoring of data, but the code created is fully general.
+* This project was done to assist [Ripple Labs](https://www.ripple.com/) in easy tracking and monitoring of data, but the code created is fully general.
 
 ### Caveats:
 
