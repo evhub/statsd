@@ -1,0 +1,34 @@
+{
+    "manifest_version": 2,
+    "name": "Statsd for Chrome",
+    "description": "Runs Statsd in a Chrome Packaged App.",
+    "version": "0.0.1",
+    "minimum_chrome_version": "33",
+    "app": {
+        "background": {
+            "scripts": ["background.js"]
+        }
+    },
+    "sockets": {
+        "udp": {
+            "send": "*",
+            "bind": "*"
+        },
+        "tcp": {
+            "connect": "*"
+        },
+        "tcpServer": {
+            "listen": "*"
+        }
+    },
+    "permissions": [
+        {
+            "socket": [
+                       "udp-bind:*:*",
+                       "tcp-connect:*:*"
+                       ]
+            },
+        "fileSystem",
+        "experimental"
+    ]
+}
